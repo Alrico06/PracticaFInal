@@ -1,5 +1,4 @@
 import controller.Controller;
-import model.Model;
 import view.InteractiveView;
 
 public class App {

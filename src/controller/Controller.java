@@ -1,8 +1,10 @@
 package controller;
 
 import model.Question;
+import model.ExamResult;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class Controller {
@@ -50,6 +52,20 @@ public class Controller {
     {
 
     }
+
+    public List <Question> getExamQuestions(int num, String topic){
+        return null;
+    }
+
+    public ExamResult evaluateExam(List <Question> questions, List<Integer> userAnswers){
+        return null;
+    }
+
+
+    public void modifyAuthor(Question q, String newAuthor){}
+    public void modifyTopics(Question q, Set<String> newTopics){}
+    public void modifyStatement(Question q, String newStatement){}
+    public void modifyOptions(Question q, List<String> texts, List<String> rationales, int correctIndex){}
 
 
 

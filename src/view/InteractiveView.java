@@ -2,6 +2,7 @@ package view;
 import controller.Controller;
 import model.Question;
 import model.Option;
+import model.ExamResult;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -68,8 +69,17 @@ public class InteractiveView extends BaseView {
 
     /* METODOS AUXILIARES */
 
+
+    private void clearScreen() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
+
     // Mostrar el menu principal //
         private void showMainMenu() {
+        
+        clearScreen();
+        
         System.out.println("\n=== MAIN MENU ===");
         System.out.println("1. CRUD (Questions)");
         System.out.println("2. Import / Export");
@@ -99,6 +109,8 @@ public class InteractiveView extends BaseView {
 
     // Mostrar el menu CRUD //
     private void showCRUDMenu() {
+
+        clearScreen();
         System.out.println("\n=== CRUD MENU ===");
         System.out.println("1. Create new question");
         System.out.println("2. List questions");
@@ -109,6 +121,7 @@ public class InteractiveView extends BaseView {
     // Pide datos para crear una nueva pregunta //
     private void createQuestion() {
 
+        clearScreen();
         showMessage("=== Create New Question ===");
 
         String author = Esdia.readString("Enter author: ");
@@ -143,15 +156,7 @@ public class InteractiveView extends BaseView {
 
         // -- ELEGIR OPCIÓN CORRECTA --
         // Comentario: Se obliga al usuario a elegir un número entre 1 y 4
-        int correctIndex = -1;
-
-        while (correctIndex < 1 || correctIndex > 4) {
-        try {
-            correctIndex = Esdia.readInt("\nWhich option is correct? (1-4): ");
-        } catch (NumberFormatException e) {
-            showErrorMessage("Invalid number.");
-        }
-        }
+        int correctIndex = Esdia.readInt("\nWhich option is correct? (1-4): ", 1, 4);
 
         // -- ENVIAR DATOS AL CONTROLLER --
         try {
@@ -167,13 +172,14 @@ public class InteractiveView extends BaseView {
 
     private void listQuestions() {
 
+    clearScreen();
     // -- Preguntar el tipo de listado --
     System.out.println("\n=== LIST QUESTIONS ===");
     System.out.println("1. List all questions");
     System.out.println("2. List questions by topic");
     System.out.println("0. Back to CRUD menu");
 
-    int choice = Esdia.readInt(    "Select an option: ",1,2);
+    int choice = Esdia.readInt(    "Select an option: ",0,2);
 
     List<Question> questions = new ArrayList<>();
 
@@ -191,7 +197,7 @@ public class InteractiveView extends BaseView {
             questions = controller.getQuestionsByTopic(topic);
 
         } else if (choice == 0) {
-            optionCRUD();
+            return;
         }else{
             
             showErrorMessage("Invalid option.");
@@ -237,7 +243,7 @@ public class InteractiveView extends BaseView {
         boolean back = false;
 
         while (!back) {
-
+            clearScreen();
             // -- Menú Import/Export --
             System.out.println("\n=== IMPORT / EXPORT MENU ===");
             System.out.println("1. Export questions to JSON");
@@ -322,6 +328,8 @@ public class InteractiveView extends BaseView {
     // Comentario: muestra la pregunta generada automáticamente.
     private void showGeneratedQuestionPreview(Question q) {
 
+        clearScreen();
+
         System.out.println("\n=== AUTOMATIC QUESTION PREVIEW ===");
 
         System.out.println("Statement: " + q.getStatement());
@@ -339,23 +347,15 @@ public class InteractiveView extends BaseView {
     }
 
     private void optionExamMode() {
-
+        clearScreen();
         showMessage("=== Exam Mode ===");
 
         // 1. Pedir número de preguntas
-        System.out.print("Enter the number of questions for the exam: ");
-        int numQuestions;
 
-        try {
-            numQuestions = Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            showErrorMessage("Invalid number.");
-            return;
-        }
+           int numQuestions = Esdia.readInt("Enter the number of questions for the exam: ");
 
         // 2. Pedir tema
-        System.out.print("Enter topic (or type ALL): ");
-        String topic = scanner.nextLine().trim().toUpperCase();
+        String topic = Esdia.readString("Enter topic (or type ALL): ").trim().toUpperCase();
 
         // 3. Pedir al controller que prepare el examen
         List<Question> examQuestions;
@@ -387,8 +387,7 @@ public class InteractiveView extends BaseView {
                 System.out.println((j + 1) + ". " + options.get(j).getText());
             }
 
-            System.out.print("Select an option (1-4). Press ENTER to leave unanswered: ");
-            String answer = scanner.nextLine();
+            String answer = Esdia.readString_ne("Select an option (1-4). Press ENTER to leave unanswered: ");
 
             if (answer.isBlank()) {
                 userAnswers.add(0); // 0 = no respondida
@@ -419,6 +418,8 @@ public class InteractiveView extends BaseView {
     // Comentario: muestra un resumen con aciertos, fallos, no respondidas y nota.
     private void showExamSummary(ExamResult result) {
 
+        clearScreen();
+
         System.out.println("\n=== EXAM SUMMARY ===");
 
         System.out.println("Correct answers: " + result.getCorrect());
@@ -429,19 +430,172 @@ public class InteractiveView extends BaseView {
         showMessage("Exam finished.");
     }
 
-
-
-
-
-    // Falta terminar de implementar las 2 funciones anteriores //
-
-
-
-
-    //Faltan por crear//
-
     private void viewQuestionDetail(Question question) {
-    // Aquí mostramos los datos de esa pregunta específica
+
+        clearScreen();
+        // Comentario: Mostrar todos los detalles de la pregunta que el usuario seleccionó.
+        System.out.println("\n=== QUESTION DETAIL ===");
+
+        System.out.println("ID: " + question.getId());
+        System.out.println("Author: " + question.getAuthor());
+        System.out.println("Topics: " + question.getTopics());
+        System.out.println("Statement: " + question.getStatement());
+
+        System.out.println("\nOptions:");
+        int i = 1;
+        for (Option op : question.getOptions()) {
+            System.out.println(i + ". " + op.getText());
+            System.out.println("   Rationale: " + op.getRationale());
+            System.out.println("   Correct: " + op.isCorrect());
+            i++;
+        }   
+
+        clearScreen();
+
+        // Menú de acciones específicas sobre esta pregunta
+        System.out.println("\n=== AVAILABLE ACTIONS ===");
+        System.out.println("1. Modify this question");
+        System.out.println("2. Delete this question");
+        System.out.println("0. Back");
+
+        int choice = Esdia.readInt("Select an option: ",0,2);
+
+        switch (choice) {
+
+            case 1 -> {
+                // Comentario: modifyQuestion() será implementado después.
+                modifyQuestion(question);
+            }
+
+            case 2 -> {
+                // Comentario: La eliminación siempre la gestiona el controller.
+                try {
+                    controller.deleteQuestion(question);
+                    showMessage("Question deleted successfully.");
+                } catch (Exception e) {
+                    showErrorMessage("Error deleting question: " + e.getMessage());
+                }
+            }
+
+            case 0 -> {
+                // Simplemente volver
+                return;
+            }
+
+            default -> showErrorMessage("Invalid option.");
+        }
     }
+
+    // Comentario: permite modificar cualquier atributo de una pregunta salvo el ID.
+    private void modifyQuestion(Question question) {
+
+        boolean back = false;
+
+        while (!back) {
+
+            clearScreen();
+            System.out.println("\n=== MODIFY QUESTION ===");
+
+            System.out.println("1. Modify author");
+            System.out.println("2. Modify topics");
+            System.out.println("3. Modify statement");
+            System.out.println("4. Modify options");
+            System.out.println("0. Back");
+
+            int option = Esdia.readInt("Select an option: ", 0, 4);
+
+            switch (option) {
+
+                case 1 -> modifyAuthor(question);
+
+                case 2 -> modifyTopics(question);
+
+                case 3 -> modifyStatement(question);
+
+                case 4 -> modifyOptions(question);
+
+                case 0 -> back = true;
+
+                default -> showErrorMessage("Invalid option.");
+            }
+        }
+    }
+
+
+    // Comentario: modificar el autor de la pregunta
+    private void modifyAuthor(Question question) {
+
+        String newAuthor = Esdia.readString("Enter new author: ");
+
+        try {
+            controller.modifyAuthor(question, newAuthor);
+            showMessage("Author updated successfully.");
+        } catch (Exception e) {
+            showErrorMessage("Error updating author: " + e.getMessage());
+        }
+    }
+
+    // Comentario: modificar los temas, siempre en mayúsculas
+    private void modifyTopics(Question question) {
+
+        String input = Esdia.readString("Enter new topics (comma separated): ");
+
+        HashSet<String> newTopics = new HashSet<>();
+
+        for (String t : input.split(",")) {
+            newTopics.add(t.trim().toUpperCase());
+        }
+
+        try {
+            controller.modifyTopics(question, newTopics);
+            showMessage("Topics updated successfully.");
+        } catch (Exception e) {
+            showErrorMessage("Error updating topics: " + e.getMessage());
+        }
+    }
+
+    // Comentario: modificar el enunciado de la pregunta
+    private void modifyStatement(Question question) {
+
+        String newStatement = Esdia.readString("Enter new statement: ");
+
+        try {
+            controller.modifyStatement(question, newStatement);
+            showMessage("Statement updated successfully.");
+        } catch (Exception e) {
+            showErrorMessage("Error updating statement: " + e.getMessage());
+        }
+    }
+
+
+    // Comentario: modificar las 4 opciones y su opción correcta
+    private void modifyOptions(Question question) {
+
+        List<String> newTexts = new ArrayList<>();
+        List<String> newRationales = new ArrayList<>();
+
+        for (int i = 1; i <= 4; i++) {
+            System.out.println("\n--- Option " + i + " ---");
+
+            newTexts.add(Esdia.readString("Enter option text: "));
+
+            newRationales.add(Esdia.readString("Enter option rationale: "));
+        }
+
+        // Elegir la correcta
+        int correctIndex = -1;
+
+        while (correctIndex < 1 || correctIndex > 4) {
+                correctIndex = Esdia.readInt("Which option is correct? (1-4): ");
+        }
+
+        try {
+            controller.modifyOptions(question, newTexts, newRationales, correctIndex);
+            showMessage("Options updated successfully.");
+        } catch (Exception e) {
+            showErrorMessage("Error updating options: " + e.getMessage());
+        }
+    }
+
 
 }

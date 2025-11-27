@@ -24,4 +24,8 @@ public class Question {
 
         return null;
     }
+
+    public String getId(){
+        return null;
+    }
 }
