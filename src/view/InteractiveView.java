@@ -52,6 +52,7 @@ public class InteractiveView extends BaseView {
 
     showMessage("Closing application...");
     showMessage("Goodbye!");
+    return;
     }
 
     // METODO MOSTRAR MENSAJE //
@@ -71,9 +72,21 @@ public class InteractiveView extends BaseView {
 
 
     private void clearScreen() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Windows
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                // Linux / macOS / otros
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            // Fallback: imprimir muchas líneas en caso de error
+            for (int i = 0; i < 50; i++) System.out.println();
+        }
     }
+
 
     // Mostrar el menu principal //
         private void showMainMenu() {
@@ -449,8 +462,6 @@ public class InteractiveView extends BaseView {
             System.out.println("   Correct: " + op.isCorrect());
             i++;
         }   
-
-        clearScreen();
 
         // Menú de acciones específicas sobre esta pregunta
         System.out.println("\n=== AVAILABLE ACTIONS ===");
