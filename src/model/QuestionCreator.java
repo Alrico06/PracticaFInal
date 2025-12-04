@@ -2,6 +2,7 @@ package model;
 
 public interface QuestionCreator {
 
-    Question generate(String topic);
+    Question createQuestion(String topic) throws QuestionCreatorException;
 
+    String getQuestionCreatorDescription();
 }

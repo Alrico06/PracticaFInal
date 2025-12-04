@@ -1,13 +1,19 @@
 package model;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Representa una pregunta del banco de preguntas.
  * Cada pregunta tiene un UUID único, autor, enunciado, temas y 4 opciones.
  */
-public class Question {
+public class Question implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private UUID id;
     private String author;

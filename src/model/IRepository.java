@@ -2,9 +2,21 @@ package model;
 
 import java.util.List;
 
+/**
+ * Abstracción de acceso a persistencia del banco de preguntas.
+ */
 public interface IRepository {
 
-    void save(List<Question> questions);
+    Question addQuestion(Question q) throws RepositoryException;
 
-    List<Question> load();
+    void removeQuestion(Question q) throws RepositoryException;
+
+    Question modifyQuestion(Question q) throws RepositoryException;
+
+    List<Question> getAllQuestions() throws RepositoryException;
+
+    /**
+     * Guarda el estado completo del banco de preguntas.
+     */
+    void saveAll(List<Question> questions) throws RepositoryException;
 }

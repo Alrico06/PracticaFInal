@@ -1,10 +1,14 @@
 package model;
 
+import java.io.Serializable;
+
 /**
  * Representa una opción de respuesta en una pregunta.
  * Contiene texto, justificación (rationale) y si es correcta o no.
  */
-public class Option {
+public class Option implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String text;
     private String rationale;

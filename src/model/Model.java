@@ -1,32 +1,50 @@
 package model;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class Model {
 
+    private final IRepository repository;
+    private final QuestionBackupIO backupHandler;
+    private final List<QuestionCreator> questionCreators;
+
     private List<Question> questions;
+    private boolean autoSave = true;
 
-    // Repositorio binario
-    private IRepository binaryRepo;
+    public Model(IRepository repository, QuestionBackupIO backupHandler, List<QuestionCreator> questionCreators) throws RepositoryException {
+        this.repository = repository;
+        this.backupHandler = backupHandler;
+        this.questionCreators = questionCreators != null ? questionCreators : new ArrayList<>();
+        this.questions = new ArrayList<>(repository.getAllQuestions());
+    }
 
-    // Import/export JSON
-    private JSONQuestionBackupIO jsonIO;
+    /* ============================================================
+     *                    CONFIGURACIÓN DE GUARDADO
+     * ============================================================ 
+     */
+    public void setAutoSave(boolean autoSave) {
+        this.autoSave = autoSave;
+    }
 
-    // Creadores automáticos
-    private List<QuestionCreator> creators;
+    public boolean isAutoSave() {
+        return autoSave;
+    }
 
-    public Model() {
+    public void persistState() throws RepositoryException {
+        repository.saveAll(questions);
+    }
 
-        this.questions = new ArrayList<>();
-        this.creators = new ArrayList<>();
-
-        // Creador automático
-        this.creators.add(new SimpleQuestionCreator());
-
-        // Inicializar repositorios
-        this.jsonIO = new JSONQuestionBackupIO();
-        this.binaryRepo = new BinaryRepository("questions.dat");
+    private void persistIfNeeded() throws RepositoryException {
+        if (autoSave) {
+            persistState();
+        }
     }
 
     /* ============================================================
@@ -34,39 +52,62 @@ public class Model {
      * ============================================================ 
      */
 
-    public void createQuestion(
+    public Question createQuestion(
             String author,
             String statement,
             Set<String> topics,
             List<String> optionTexts,
             List<String> optionRationales,
             int correctIndex
-    ) {
-        List<Option> options = new ArrayList<>();
+    ) throws RepositoryException {
+        validateOptions(optionTexts, optionRationales, correctIndex);
 
+        List<Option> options = new ArrayList<>();
         for (int i = 0; i < optionTexts.size(); i++) {
             boolean isCorrect = (i + 1 == correctIndex);
             options.add(new Option(optionTexts.get(i), optionRationales.get(i), isCorrect));
         }
 
         Question q = new Question(author, statement, topics, options);
-        questions.add(q);
-
-        binaryRepo.save(questions);
+        repository.addQuestion(q);
+        refreshCache();
+        persistIfNeeded();
+        return q;
     }
 
-
-    public List<Question> getAllQuestions() {
-        return new ArrayList<>(questions);
+    private void validateOptions(List<String> texts, List<String> rationales, int correctIndex) throws RepositoryException {
+        if (texts == null || rationales == null || texts.size() != 4 || rationales.size() != 4) {
+            throw new RepositoryException("Questions must have exactly 4 options.");
+        }
+        if (correctIndex < 1 || correctIndex > 4) {
+            throw new RepositoryException("Correct option must be between 1 and 4.");
+        }
     }
 
-
-    public List<Question> getQuestionsByTopic(String topic) {
+    public List<Question> getAllQuestionsSorted() {
         return questions.stream()
-                .filter(q -> q.getTopics().contains(topic))
+                .sorted(Comparator.comparing(Question::getCreationDate))
                 .collect(Collectors.toList());
     }
 
+    public List<Question> getQuestionsByTopic(String topic) {
+        return questions.stream()
+                .filter(q -> q.getTopics().contains(topic.toUpperCase()))
+                .sorted(Comparator.comparing(Question::getCreationDate))
+                .collect(Collectors.toList());
+    }
+
+    public Set<String> getAvailableTopics() {
+        Set<String> topics = new HashSet<>();
+        for (Question q : questions) {
+            topics.addAll(q.getTopics());
+        }
+        return topics;
+    }
+
+    public int getQuestionCount() {
+        return questions.size();
+    }
 
     public Question getQuestionById(UUID id) {
         return questions.stream()
@@ -75,26 +116,31 @@ public class Model {
                 .orElse(null);
     }
 
-
-    public void deleteQuestion(Question q) {
-        questions.remove(q);
-        binaryRepo.save(questions);
+    public void deleteQuestion(Question q) throws RepositoryException {
+        repository.removeQuestion(q);
+        refreshCache();
+        persistIfNeeded();
     }
 
-
-    public void modifyAuthor(Question q, String newAuthor) {
+    public void modifyAuthor(Question q, String newAuthor) throws RepositoryException {
         q.setAuthor(newAuthor);
-        binaryRepo.save(questions);
+        repository.modifyQuestion(q);
+        refreshCache();
+        persistIfNeeded();
     }
 
-    public void modifyTopics(Question q, Set<String> newTopics) {
+    public void modifyTopics(Question q, Set<String> newTopics) throws RepositoryException {
         q.setTopics(newTopics);
-        binaryRepo.save(questions);
+        repository.modifyQuestion(q);
+        refreshCache();
+        persistIfNeeded();
     }
 
-    public void modifyStatement(Question q, String newStatement) {
+    public void modifyStatement(Question q, String newStatement) throws RepositoryException {
         q.setStatement(newStatement);
-        binaryRepo.save(questions);
+        repository.modifyQuestion(q);
+        refreshCache();
+        persistIfNeeded();
     }
 
     public void modifyOptions(
@@ -102,16 +148,19 @@ public class Model {
             List<String> texts,
             List<String> rationales,
             int correctIndex
-    ) {
-        List<Option> newOptions = new ArrayList<>();
+    ) throws RepositoryException {
+        validateOptions(texts, rationales, correctIndex);
 
+        List<Option> newOptions = new ArrayList<>();
         for (int i = 0; i < texts.size(); i++) {
             boolean isCorrect = (i + 1 == correctIndex);
             newOptions.add(new Option(texts.get(i), rationales.get(i), isCorrect));
         }
 
         q.setOptions(newOptions);
-        binaryRepo.save(questions);
+        repository.modifyQuestion(q);
+        refreshCache();
+        persistIfNeeded();
     }
 
     /* ============================================================
@@ -119,26 +168,31 @@ public class Model {
      * ============================================================ 
      */
 
-    public void exportQuestions() {
-        jsonIO.exportQuestions(questions);
+    public void exportQuestions(String fileName) throws QuestionBackupIOException {
+        backupHandler.exportQuestions(questions, normalizeFileName(fileName));
     }
 
-
-    public void importQuestions() {
-
-        List<Question> imported = jsonIO.importQuestions();
+    public void importQuestions(String fileName) throws QuestionBackupIOException, RepositoryException {
+        List<Question> imported = backupHandler.importQuestions(normalizeFileName(fileName));
 
         for (Question q : imported) {
-
             boolean exists = questions.stream()
                     .anyMatch(x -> x.getId().equals(q.getId()));
 
             if (!exists) {
-                questions.add(q);
+                repository.addQuestion(q);
             }
         }
 
-        binaryRepo.save(questions);
+        refreshCache();
+        persistIfNeeded();
+    }
+
+    private String normalizeFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return "backup.json";
+        }
+        return fileName;
     }
 
     /* ============================================================
@@ -147,23 +201,29 @@ public class Model {
      */
 
     public boolean hasQuestionCreators() {
-        return !creators.isEmpty();
+        return !questionCreators.isEmpty();
     }
 
-    public Question generateAutomaticQuestion(String topic) {
-
-        if (creators.isEmpty()) return null;
-
-        QuestionCreator creator = creators.get(0);
-
-        return creator.generate(topic);
+    public List<String> getQuestionCreatorDescriptions() {
+        return questionCreators.stream()
+                .map(QuestionCreator::getQuestionCreatorDescription)
+                .collect(Collectors.toList());
     }
 
-    public void addGeneratedQuestion(Question q) {
-        if (q != null) {
-            questions.add(q);
-            binaryRepo.save(questions);
+    public Question generateAutomaticQuestion(int creatorIndex, String topic) throws QuestionCreatorException {
+        if (creatorIndex < 0 || creatorIndex >= questionCreators.size()) {
+            throw new QuestionCreatorException("Invalid generator selected");
         }
+        return questionCreators.get(creatorIndex).createQuestion(topic);
+    }
+
+    public Question addGeneratedQuestion(Question q) throws RepositoryException {
+        if (q != null) {
+            repository.addQuestion(q);
+            refreshCache();
+            persistIfNeeded();
+        }
+        return q;
     }
 
     /* ============================================================
@@ -171,45 +231,76 @@ public class Model {
      * ============================================================
      */
 
-    public List<Question> getExamQuestions(int num, String topic) {
+    public int getMaxQuestionsForTopic(String topic) {
+        if ("ALL".equalsIgnoreCase(topic)) {
+            return questions.size();
+        }
+        return (int) questions.stream().filter(q -> q.getTopics().contains(topic.toUpperCase())).count();
+    }
 
+    public ExamSession configureExam(String topic, int num) throws RepositoryException {
         List<Question> pool;
-
-        if (topic.equalsIgnoreCase("ALL")) {
+        if ("ALL".equalsIgnoreCase(topic)) {
             pool = new ArrayList<>(questions);
         } else {
             pool = questions.stream()
-                    .filter(q -> q.getTopics().contains(topic))
+                    .filter(q -> q.getTopics().contains(topic.toUpperCase()))
                     .collect(Collectors.toList());
         }
 
-        if (pool.size() < num) return new ArrayList<>();
+        if (pool.isEmpty()) {
+            throw new RepositoryException("No questions available for topic " + topic);
+        }
+        if (num < 1 || num > pool.size()) {
+            throw new RepositoryException("Number of questions must be between 1 and " + pool.size());
+        }
 
         Collections.shuffle(pool);
-
-        return pool.subList(0, num);
+        List<Question> selected = new ArrayList<>(pool.subList(0, num));
+        return new ExamSession(selected);
     }
 
+    public String answerQuestion(ExamSession session, int questionIndex, int answerIndex) {
+        session.recordAnswer(questionIndex, answerIndex);
+        Question q = session.getQuestions().get(questionIndex);
 
-    public ExamResult evaluateExam(
-            List<Question> questions,
-            List<Integer> userAnswers
-    ) {
+        if (answerIndex == 0) {
+            return "Pregunta no respondida. Correcta: " + findCorrectOption(q).getText();
+        }
+
+        Option chosen = q.getOptions().get(answerIndex - 1);
+        Option correct = findCorrectOption(q);
+        if (chosen.isCorrect()) {
+            return "Respuesta correcta. Rationale: " + chosen.getRationale();
+        }
+        return "Respuesta incorrecta. Elegiste: " + chosen.getText() +
+                " (" + chosen.getRationale() + "). Correcta: " +
+                correct.getText() + " (" + correct.getRationale() + ").";
+    }
+
+    private Option findCorrectOption(Question q) {
+        return q.getOptions().stream()
+                .filter(Option::isCorrect)
+                .findFirst()
+                .orElse(q.getOptions().get(0));
+    }
+
+    public ExamResult finishExam(ExamSession session) {
+        session.finish();
+        List<Question> qs = session.getQuestions();
+        List<Integer> answers = session.getAnswers();
+
         int correct = 0;
         int wrong = 0;
         int unanswered = 0;
 
-        for (int i = 0; i < questions.size(); i++) {
-
-            int ans = userAnswers.get(i);
-
+        for (int i = 0; i < qs.size(); i++) {
+            int ans = answers.get(i);
             if (ans == 0) {
                 unanswered++;
                 continue;
             }
-
-            Option selected = questions.get(i).getOptions().get(ans - 1);
-
+            Option selected = qs.get(i).getOptions().get(ans - 1);
             if (selected.isCorrect()) {
                 correct++;
             } else {
@@ -217,9 +308,18 @@ public class Model {
             }
         }
 
-        double grade = 10.0 * correct / questions.size();
+        double value = 10.0 / qs.size();
+        double score = correct * value - wrong * (value / 3.0);
+        double grade = Math.max(0, Math.min(10, score));
 
-        return new ExamResult(correct, wrong, unanswered, grade);
+        return new ExamResult(correct, wrong, unanswered, grade, session.getDurationSeconds());
     }
 
+    public String getBackupDescription() {
+        return backupHandler.getBackupIODescription();
+    }
+
+    private void refreshCache() throws RepositoryException {
+        this.questions = new ArrayList<>(repository.getAllQuestions());
+    }
 }

@@ -5,7 +5,7 @@ import java.util.*;
 public class SimpleQuestionCreator implements QuestionCreator {
 
     @Override
-    public Question generate(String topic) {
+    public Question createQuestion(String topic) {
 
         String statement = "Automatically generated question for topic: " + topic;
 
@@ -20,5 +20,10 @@ public class SimpleQuestionCreator implements QuestionCreator {
         topics.add(topic.toUpperCase());
 
         return new Question("AUTO", statement, topics, options);
+    }
+
+    @Override
+    public String getQuestionCreatorDescription() {
+        return "Simple local generator";
     }
 }

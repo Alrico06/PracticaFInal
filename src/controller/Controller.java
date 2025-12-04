@@ -1,9 +1,13 @@
 package controller;
 
-import model.Question;
-import view.BaseView;
 import model.ExamResult;
+import model.ExamSession;
 import model.Model;
+import model.Question;
+import model.QuestionCreatorException;
+import model.QuestionBackupIOException;
+import model.RepositoryException;
+import view.BaseView;
 
 import java.util.List;
 import java.util.Set;
@@ -36,6 +40,7 @@ public class Controller {
 
     public void start() {
         if (view != null) {
+            view.showMessage("Loaded " + model.getQuestionCount() + " questions from storage. Backup handler: " + model.getBackupDescription());
             view.init();
         }
     }
@@ -53,13 +58,13 @@ public class Controller {
         List<String> optionTexts,
         List<String> optionRationales,
         int correctIndex
-    ) {
+    ) throws RepositoryException {
         model.createQuestion(author, statement, topics, optionTexts, optionRationales, correctIndex);
     }
 
 
     public List<Question> getAllQuestions() {
-        return model.getAllQuestions();
+        return model.getAllQuestionsSorted();
     }
 
 
@@ -74,17 +79,21 @@ public class Controller {
 
 
     public void deleteQuestion(Question q) {
-        model.deleteQuestion(q);
+        try {
+            model.deleteQuestion(q);
+        } catch (RepositoryException e) {
+            view.showErrorMessage(e.getMessage());
+        }
     }
 
 
-    public void exportQuestions() {
-        model.exportQuestions();
+    public void exportQuestions(String fileName) throws QuestionBackupIOException {
+        model.exportQuestions(fileName);
     }
 
 
-    public void importQuestions() {
-        model.importQuestions();
+    public void importQuestions(String fileName) throws QuestionBackupIOException, RepositoryException {
+        model.importQuestions(fileName);
     }
 
 
@@ -92,35 +101,45 @@ public class Controller {
         return model.hasQuestionCreators();
     }
 
+    public List<String> getQuestionCreatorDescriptions() {
+        return model.getQuestionCreatorDescriptions();
+    }
 
-    public Question generateAutomaticQuestion(String topic) {
-        return model.generateAutomaticQuestion(topic);
+    public Question generateAutomaticQuestion(int creatorIndex, String topic) throws QuestionCreatorException {
+        return model.generateAutomaticQuestion(creatorIndex, topic);
     }
 
 
-    public void addGeneratedQuestion(Question q) {
+    public void addGeneratedQuestion(Question q) throws RepositoryException {
         model.addGeneratedQuestion(q);
     }
 
 
-    public List<Question> getExamQuestions(int num, String topic) {
-        return model.getExamQuestions(num, topic);
-    }   
-
-
-    public ExamResult evaluateExam(List<Question> questions, List<Integer> userAnswers) {
-        return model.evaluateExam(questions, userAnswers);
+    public int getMaxQuestionsForTopic(String topic) {
+        return model.getMaxQuestionsForTopic(topic);
     }
 
-    public void modifyAuthor(Question q, String newAuthor) {
+    public ExamSession configureExam(String topic, int num) throws RepositoryException {
+        return model.configureExam(topic, num);
+    }
+
+    public String answerQuestion(ExamSession session, int index, int answerIndex) {
+        return model.answerQuestion(session, index, answerIndex);
+    }
+
+    public ExamResult finishExam(ExamSession session) {
+        return model.finishExam(session);
+    }
+
+    public void modifyAuthor(Question q, String newAuthor) throws RepositoryException {
         model.modifyAuthor(q, newAuthor);
     }
 
-    public void modifyTopics(Question q, Set<String> newTopics) {
+    public void modifyTopics(Question q, Set<String> newTopics) throws RepositoryException {
         model.modifyTopics(q, newTopics);
     }
 
-    public void modifyStatement(Question q, String newStatement) {
+    public void modifyStatement(Question q, String newStatement) throws RepositoryException {
         model.modifyStatement(q, newStatement);
     }
 
@@ -129,7 +148,25 @@ public class Controller {
             List<String> texts,
             List<String> rationales,
             int correctIndex
-    ) {
+    ) throws RepositoryException {
         model.modifyOptions(q, texts, rationales, correctIndex);
+    }
+
+    public Set<String> getAvailableTopics() {
+        return model.getAvailableTopics();
+    }
+
+    public void setAutoSave(boolean autoSave) {
+        model.setAutoSave(autoSave);
+    }
+
+    public void persistState() {
+        try {
+            model.persistState();
+        } catch (RepositoryException e) {
+            if (view != null) {
+                view.showErrorMessage("Error saving data: " + e.getMessage());
+            }
+        }
     }
 }

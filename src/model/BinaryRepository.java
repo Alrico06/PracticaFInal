@@ -1,33 +1,92 @@
 package model;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación binaria del repositorio, usando serialización estándar.
+ */
 public class BinaryRepository implements IRepository {
 
-    private String filename;
+    private final Path filePath;
+    private List<Question> cache;
 
-    public BinaryRepository(String filename) {
-        this.filename = filename;
+    public BinaryRepository(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            fileName = "questions.bin";
+        }
+        Path homeDir = Path.of(System.getProperty("user.home"));
+        try {
+            Files.createDirectories(homeDir);
+        } catch (Exception e) {
+            // si no se puede crear el home, usaremos la ruta absoluta igualmente
+        }
+        this.filePath = homeDir.resolve(fileName);
+        this.cache = loadFromDisk();
     }
 
     @Override
-    public void save(List<Question> questions) {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename))) {
-            out.writeObject(questions);
-        } catch (Exception e) {
-            System.err.println("Error saving binary data: " + e.getMessage());
+    public Question addQuestion(Question q) throws RepositoryException {
+        cache.add(q);
+        return q;
+    }
+
+    @Override
+    public void removeQuestion(Question q) throws RepositoryException {
+        cache.removeIf(existing -> existing.getId().equals(q.getId()));
+    }
+
+    @Override
+    public Question modifyQuestion(Question q) throws RepositoryException {
+        boolean replaced = false;
+        for (int i = 0; i < cache.size(); i++) {
+            if (cache.get(i).getId().equals(q.getId())) {
+                cache.set(i, q);
+                replaced = true;
+                break;
+            }
         }
+        if (!replaced) {
+            throw new RepositoryException("Question not found: " + q.getId());
+        }
+        return q;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<Question> load() {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename))) {
-            return (List<Question>) in.readObject();
+    public List<Question> getAllQuestions() throws RepositoryException {
+        return new ArrayList<>(cache);
+    }
+
+    @Override
+    public void saveAll(List<Question> questions) throws RepositoryException {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath.toFile()))) {
+            cache = new ArrayList<>(questions);
+            out.writeObject(cache);
         } catch (Exception e) {
-            return new ArrayList<>(); // Sin datos o error → colección vacía
+            throw new RepositoryException("Error saving binary data", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Question> loadFromDisk() {
+        if (!Files.exists(filePath)) {
+            return new ArrayList<>();
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filePath.toFile()))) {
+            Object obj = in.readObject();
+            if (obj instanceof List) {
+                return (List<Question>) obj;
+            }
+            return new ArrayList<>();
+        } catch (Exception e) {
+            return new ArrayList<>();
         }
     }
 }

@@ -1,16 +1,104 @@
 package view;
 import controller.Controller;
-import model.Question;
-import model.Option;
 import model.ExamResult;
+import model.ExamSession;
+import model.Option;
+import model.Question;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.coti.tools.Esdia;
 
 public class InteractiveView extends BaseView {
+
+    /* ---------------- UI ENHANCEMENTS START ---------------- */
+    /* ---- BRANDING START ---- */
+    private static final String RESET = "\u001B[0m";
+    private static final String BOLD = "\u001B[1m";
+    private static final String DIM = "\u001B[2m";
+    private static final String CYAN = "\u001B[36m";
+    private static final String YELLOW = "\u001B[33m";
+    private static final String GREEN = "\u001B[32m";
+    private static final String MAGENTA = "\u001B[35m";
+    private static final String BLUE = "\u001B[34m";
+    private static final String RED = "\u001B[31m";
+    private static final String BRAND = BOLD + MAGENTA;
+    private static final String THEME_NAME = "EXAMINATOR 3000";
+
+    private String colorize(String text, String color) {
+        return color + text + RESET;
+    }
+
+    private void printHeader(String title) {
+        String bar = "============================================================";
+        System.out.println(colorize(bar, BLUE));
+        System.out.println(colorize("★  " + title, BOLD + CYAN));
+        System.out.println(colorize(bar, BLUE));
+    }
+
+    private void printDivider() {
+        System.out.println(colorize("------------------------------------------------------------", MAGENTA));
+    }
+
+    private void animateProgress(String label) {
+        String base = colorize(label + " [", YELLOW);
+        String end = colorize("]", YELLOW);
+        StringBuilder bar = new StringBuilder();
+        for (int i = 0; i < 12; i++) {
+            bar.append("#");
+            System.out.print("\r" + base + colorize(bar.toString(), GREEN) + " ".repeat(12 - i) + end);
+            try {
+                Thread.sleep(25);
+            } catch (InterruptedException ignored) {
+            }
+        }
+        System.out.println();
+    }
+
+    private void printMenuItem(int number, String text, String emoji, String color) {
+        System.out.println(colorize(emoji + "  " + number + ". " + text, color));
+    }
+
+    private void renderScoreBar(double grade) {
+        int segments = 20;
+        int filled = (int) Math.round((grade / 10.0) * segments);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < segments; i++) {
+            sb.append(i < filled ? colorize("█", GREEN) : colorize("░", YELLOW));
+        }
+        System.out.println("Score: " + sb + colorize(String.format("  %.2f/10", grade), BOLD + CYAN));
+    }
+
+    private void animateBanner(String text) {
+        String banner = "✦ " + text + " ✦";
+        for (int i = 0; i < banner.length(); i++) {
+            System.out.print(colorize(String.valueOf(banner.charAt(i)), MAGENTA));
+            try {
+                Thread.sleep(6);
+            } catch (InterruptedException ignored) {}
+        }
+        System.out.println();
+    }
+
+    private void animateSectionTransition(String title) {
+        printDivider();
+        animateBanner(title);
+        printDivider();
+    }
+
+    private void pulseMessage(String message, String color, int pulses) {
+        for (int i = 0; i < pulses; i++) {
+            System.out.print("\r" + colorize(message, i % 2 == 0 ? color : BOLD + color));
+            try {
+                Thread.sleep(120);
+            } catch (InterruptedException ignored) {}
+        }
+        System.out.print("\r" + colorize(message, color) + "\n");
+    }
+    /* ---------------- UI ENHANCEMENTS END ---------------- */
     
     /* CONSTRUCTOR */
 
@@ -26,7 +114,14 @@ public class InteractiveView extends BaseView {
 
         boolean exit = false;
 
-        showMessage("Welcome to the question management system.");
+        printHeader("WELCOME TO EXAMINATOR 3000");
+        animateBanner("Your question bank, reinvented.");
+        pulseMessage("Navigate with numbers and press ENTER", CYAN, 3);
+        boolean autoSave = Esdia.yesOrNo("Do you want to autosave after each operation? (y/n): ");
+        controller.setAutoSave(autoSave);
+        if (!autoSave) {
+            showMessage("El guardado se realizará al salir de la aplicación.");
+        }
 
         while (!exit) {
             showMainMenu();
@@ -50,6 +145,11 @@ public class InteractiveView extends BaseView {
     @Override
     public void end(){
 
+    try {
+        controller.persistState();
+    } catch (Exception ignored) {
+        // handled in controller
+    }
     showMessage("Closing application...");
     showMessage("Goodbye!");
     return;
@@ -93,12 +193,14 @@ public class InteractiveView extends BaseView {
         
         clearScreen();
         
-        System.out.println("\n=== MAIN MENU ===");
-        System.out.println("1. CRUD (Questions)");
-        System.out.println("2. Import / Export");
-        System.out.println("3. Automatic Question Creation");
-        System.out.println("4. Exam Mode");
-        System.out.println("0. Exit");
+        printHeader("MAIN MENU");
+        pulseMessage("Navigate with numbers and press ENTER", CYAN, 3);
+        printMenuItem(1, "CRUD (Questions)", "📝", CYAN);
+        printMenuItem(2, "Import / Export", "📦", CYAN);
+        printMenuItem(3, "Automatic Question Creation", "🤖", CYAN);
+        printMenuItem(4, "Exam Mode", "🧠", CYAN);
+        printDivider();
+        System.out.println(colorize("🚪 0. Exit", RED));
     }
 
     // Gestionar la opción CRUD //
@@ -124,10 +226,12 @@ public class InteractiveView extends BaseView {
     private void showCRUDMenu() {
 
         clearScreen();
-        System.out.println("\n=== CRUD MENU ===");
-        System.out.println("1. Create new question");
-        System.out.println("2. List questions");
-        System.out.println("0. Back to main menu");
+        printHeader("CRUD MENU");
+        pulseMessage("Manage your bank of questions", GREEN, 2);
+        printMenuItem(1, "Create new question", "➕", CYAN);
+        printMenuItem(2, "List questions", "📋", CYAN);
+        printDivider();
+        System.out.println(colorize("🔙 0. Back to main menu", RED));
     }
 
     
@@ -187,10 +291,12 @@ public class InteractiveView extends BaseView {
 
     clearScreen();
     // -- Preguntar el tipo de listado --
-    System.out.println("\n=== LIST QUESTIONS ===");
-    System.out.println("1. List all questions");
-    System.out.println("2. List questions by topic");
-    System.out.println("0. Back to CRUD menu");
+    printHeader("LIST QUESTIONS");
+    pulseMessage("Choose how you want to see the questions", MAGENTA, 2);
+    printMenuItem(1, "List all questions", "📚", CYAN);
+    printMenuItem(2, "List questions by topic", "🎯", CYAN);
+    printDivider();
+    System.out.println(colorize("🔙 0. Back to CRUD menu", RED));
 
     int choice = Esdia.readInt(    "Select an option: ",0,2);
 
@@ -204,8 +310,9 @@ public class InteractiveView extends BaseView {
 
         } else if (choice == 2) {
 
-            // -- Preguntar tema --
-            String topic = Esdia.readString("Enter topic: ").trim().toUpperCase();
+            // -- Preguntar tema disponible --
+            String topic = chooseTopic(false);
+            if (topic == null) return;
 
             questions = controller.getQuestionsByTopic(topic);
 
@@ -227,7 +334,7 @@ public class InteractiveView extends BaseView {
         System.out.println("\n--- Questions ---");
         int index = 1;
         for (Question q : questions) {
-            System.out.println(index + ". " + q.getStatement());
+            System.out.println(index + ". " + q.getStatement() + " [" + q.getCreationDate() + "]");
             index++;
         }
 
@@ -258,10 +365,13 @@ public class InteractiveView extends BaseView {
         while (!back) {
             clearScreen();
             // -- Menú Import/Export --
-            System.out.println("\n=== IMPORT / EXPORT MENU ===");
-            System.out.println("1. Export questions to JSON");
-            System.out.println("2. Import questions from JSON");
-            System.out.println("0. Back to main menu");
+            printHeader("IMPORT / EXPORT");
+            pulseMessage("Backup your work or restore it", BLUE, 2);
+            animateSectionTransition("Choose backup action");
+            printMenuItem(1, "Export questions to JSON", "⬆️", CYAN);
+            printMenuItem(2, "Import questions from JSON", "⬇️", CYAN);
+            printDivider();
+            System.out.println(colorize("🔙 0. Back to main menu", RED));
 
             int option = Esdia.readInt("Select an option: ", 0, 2);
 
@@ -281,7 +391,9 @@ public class InteractiveView extends BaseView {
     private void exportQuestions() {
         // Comentario: La vista solo pide al controller realizar la exportación.
         try {
-            controller.exportQuestions();
+            String filename = Esdia.readString("Enter filename (stored in your home): ").trim();
+            animateProgress("Exporting");
+            controller.exportQuestions(filename);
             showMessage("Questions exported successfully.");
         } catch (Exception e) {
             showErrorMessage("Export failed: " + e.getMessage());
@@ -292,7 +404,9 @@ public class InteractiveView extends BaseView {
     private void importQuestions() {
         // Comentario: La vista pide al controller que importe desde JSON.
         try {
-            controller.importQuestions();
+            String filename = Esdia.readString("Enter filename to import (from your home): ").trim();
+            animateProgress("Importing");
+            controller.importQuestions(filename);
             showMessage("Questions imported successfully.");
         } catch (Exception e) {
             showErrorMessage("Import failed: " + e.getMessage());
@@ -304,16 +418,24 @@ public class InteractiveView extends BaseView {
 
         // Comentario: primero verificamos si existen QuestionCreators cargados.
         if (!controller.hasQuestionCreators()) {
-            showErrorMessage("There are no automatic question generators available.");
+            showErrorMessage("There are no automatic question generators available. Please start the app with -question-creator.");
+            Esdia.readString("Press ENTER to continue.");
             return;
         }
+
+        List<String> descriptions = controller.getQuestionCreatorDescriptions();
+        System.out.println("Available generators:");
+        for (int i = 0; i < descriptions.size(); i++) {
+            System.out.println((i + 1) + ". " + descriptions.get(i));
+        }
+        int selectedGenerator = Esdia.readInt("Choose generator: ", 1, descriptions.size()) - 1;
 
         // Pedimos el tema
         String topic = Esdia.readString("Enter topic for the automatic question: ").trim().toUpperCase();
 
         try {
             // Pedimos al controller que genere una pregunta
-            Question generated = controller.generateAutomaticQuestion(topic);
+            Question generated = controller.generateAutomaticQuestion(selectedGenerator, topic);
 
             if (generated == null) {
                 showErrorMessage("No question could be generated for this topic.");
@@ -327,8 +449,12 @@ public class InteractiveView extends BaseView {
             String confirm = Esdia.readString("Do you want to add this question to the database? (Y/N): ").trim().toUpperCase();
 
             if (confirm.equals("Y")) {
-                controller.addGeneratedQuestion(generated);
-                showMessage("Question added successfully.");
+                try {
+                    controller.addGeneratedQuestion(generated);
+                    showMessage("Question added successfully.");
+                } catch (Exception ex) {
+                    showErrorMessage("Could not save question: " + ex.getMessage());
+                }
             } else {
                showMessage("Operation cancelled.");
             }
@@ -359,40 +485,58 @@ public class InteractiveView extends BaseView {
         }
     }
 
+    private String chooseTopic(boolean includeAll) {
+        Set<String> topics = controller.getAvailableTopics();
+        if (topics.isEmpty()) {
+            showErrorMessage("No topics available.");
+            return null;
+        }
+        List<String> topicList = new ArrayList<>(topics);
+        topicList.sort(String::compareTo);
+        if (includeAll) {
+            topicList.add("ALL");
+        }
+
+        System.out.println("\nAvailable topics:");
+        for (int i = 0; i < topicList.size(); i++) {
+            System.out.println((i + 1) + ". " + topicList.get(i));
+        }
+        int choice = Esdia.readInt("Select topic: ", 1, topicList.size());
+        return topicList.get(choice - 1);
+    }
+
     private void optionExamMode() {
         clearScreen();
-        showMessage("=== Exam Mode ===");
+        printHeader("EXAM MODE 🧠");
 
-        // 1. Pedir número de preguntas
+        String topic = chooseTopic(true);
+        if (topic == null) return;
 
-           int numQuestions = Esdia.readInt("Enter the number of questions for the exam: ");
+        int maxQuestions = controller.getMaxQuestionsForTopic(topic);
+        if (maxQuestions == 0) {
+            showErrorMessage("No questions available for that topic.");
+            return;
+        }
 
-        // 2. Pedir tema
-        String topic = Esdia.readString("Enter topic (or type ALL): ").trim().toUpperCase();
+        int numQuestions = Esdia.readInt("Enter the number of questions for the exam (1-" + maxQuestions + "): ", 1, maxQuestions);
 
-        // 3. Pedir al controller que prepare el examen
-        List<Question> examQuestions;
-
+        ExamSession session;
         try {
-            examQuestions = controller.getExamQuestions(numQuestions, topic);
-
-            if (examQuestions.isEmpty()) {
-                showErrorMessage("Not enough questions available.");
-                return;
-           }
-
+            session = controller.configureExam(topic, numQuestions);
         } catch (Exception e) {
             showErrorMessage("Could not prepare exam: " + e.getMessage());
             return;
         }
 
-        // 4. Registrar respuestas del usuario
-        List<Integer> userAnswers = new ArrayList<>();
+        printDivider();
+        System.out.println(colorize("Exam starting... Good luck!", GREEN));
+
+        List<Question> examQuestions = session.getQuestions();
 
         for (int i = 0; i < examQuestions.size(); i++) {
             Question q = examQuestions.get(i);
 
-            System.out.println("\nQuestion " + (i + 1) + ":");
+            System.out.println("\nQuestion " + (i + 1) + " of " + examQuestions.size() + ":");
             System.out.println(q.getStatement());
 
             List<Option> options = q.getOptions();
@@ -401,30 +545,24 @@ public class InteractiveView extends BaseView {
             }
 
             String answer = Esdia.readString_ne("Select an option (1-4). Press ENTER to leave unanswered: ");
-
-            if (answer.isBlank()) {
-                userAnswers.add(0); // 0 = no respondida
-            } else {
+            int selected = 0;
+            if (!answer.isBlank()) {
                 try {
-                    int selected = Integer.parseInt(answer);
+                    selected = Integer.parseInt(answer);
                     if (selected < 1 || selected > 4) {
-                        userAnswers.add(0);
-                    } else {
-                        userAnswers.add(selected);
+                        selected = 0;
                     }
                 } catch (NumberFormatException e) {
-                    userAnswers.add(0);
+                    selected = 0;
                 }
             }
+
+            String feedback = controller.answerQuestion(session, i, selected);
+            showMessage(feedback);
         }
 
-        // 5. Calcular resultados mediante el controller
-        try {
-            ExamResult result = controller.evaluateExam(examQuestions, userAnswers);
-            showExamSummary(result);
-        } catch (Exception e) {
-            showErrorMessage("Error evaluating exam: " + e.getMessage());
-        }
+        ExamResult result = controller.finishExam(session);
+        showExamSummary(result);
     }
 
 
@@ -433,24 +571,27 @@ public class InteractiveView extends BaseView {
 
         clearScreen();
 
-        System.out.println("\n=== EXAM SUMMARY ===");
+        printHeader("EXAM SUMMARY");
 
         System.out.println("Correct answers: " + result.getCorrect());
         System.out.println("Wrong answers:   " + result.getWrong());
         System.out.println("Unanswered:      " + result.getUnanswered());
-        System.out.println("Grade (0-10):    " + result.getGrade());
+        renderScoreBar(result.getGrade());
+        System.out.println("Time (s):        " + result.getDurationSeconds());
 
-        showMessage("Exam finished.");
+        showMessage("Exam finished. Press ENTER to continue.");
+        Esdia.readString(" ");
     }
 
     private void viewQuestionDetail(Question question) {
 
         clearScreen();
         // Comentario: Mostrar todos los detalles de la pregunta que el usuario seleccionó.
-        System.out.println("\n=== QUESTION DETAIL ===");
+        printHeader("QUESTION DETAIL 🔍");
 
         System.out.println("ID: " + question.getId());
         System.out.println("Author: " + question.getAuthor());
+        System.out.println("Created: " + question.getCreationDate());
         System.out.println("Topics: " + question.getTopics());
         System.out.println("Statement: " + question.getStatement());
 
@@ -464,7 +605,8 @@ public class InteractiveView extends BaseView {
         }   
 
         // Menú de acciones específicas sobre esta pregunta
-        System.out.println("\n=== AVAILABLE ACTIONS ===");
+        printDivider();
+        System.out.println(colorize("AVAILABLE ACTIONS", BOLD + YELLOW));
         System.out.println("1. Modify this question");
         System.out.println("2. Delete this question");
         System.out.println("0. Back");
@@ -505,7 +647,7 @@ public class InteractiveView extends BaseView {
         while (!back) {
 
             clearScreen();
-            System.out.println("\n=== MODIFY QUESTION ===");
+            printHeader("MODIFY QUESTION ✏️");
 
             System.out.println("1. Modify author");
             System.out.println("2. Modify topics");

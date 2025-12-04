@@ -54,9 +54,9 @@ Eliminar pregunta
 
 🔹 Importación / Exportación JSON
 
-Exporta todas las preguntas y temas a ~/backup.json
+Exporta todas las preguntas y temas a data/backup.json (o el nombre indicado) dentro del proyecto
 
-Importa preguntas desde el mismo archivo
+Importa preguntas desde el mismo directorio data/
 
 No importa elementos con UUID repetido
 
@@ -128,3 +128,4 @@ Proyecto desarrollado por Álvaro Rico, como práctica final de Programación Or
 
 Este proyecto está disponible bajo la licencia MIT.
 Puedes usar, modificar y distribuir libremente citando al autor.
+

@@ -2,20 +2,22 @@ package model;
 
 /**
  * Clase que representa el resultado de un examen.
- * Contiene aciertos, fallos, no respondidas y nota sobre 10.
+ * Contiene aciertos, fallos, no respondidas, nota sobre 10 y duración.
  */
 public class ExamResult {
 
-    private int correct;
-    private int wrong;
-    private int unanswered;
-    private double grade;
+    private final int correct;
+    private final int wrong;
+    private final int unanswered;
+    private final double grade;
+    private final long durationSeconds;
 
-    public ExamResult(int correct, int wrong, int unanswered, double grade) {
+    public ExamResult(int correct, int wrong, int unanswered, double grade, long durationSeconds) {
         this.correct = correct;
         this.wrong = wrong;
         this.unanswered = unanswered;
         this.grade = grade;
+        this.durationSeconds = durationSeconds;
     }
 
     // --- GETTERS --- //
@@ -35,11 +37,16 @@ public class ExamResult {
         return grade;
     }
 
+    public long getDurationSeconds() {
+        return durationSeconds;
+    }
+
     @Override
     public String toString() {
         return "ExamResult{correct=" + correct +
                 ", wrong=" + wrong +
                 ", unanswered=" + unanswered +
-                ", grade=" + grade + "}";
+                ", grade=" + grade +
+                ", durationSeconds=" + durationSeconds + "}";
     }
 }
