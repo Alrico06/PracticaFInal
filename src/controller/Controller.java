@@ -160,6 +160,10 @@ public class Controller {
         model.setAutoSave(autoSave);
     }
 
+    public String getBackupDescription() {
+        return model.getBackupDescription();
+    }
+
     public void persistState() {
         try {
             model.persistState();

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.coti.tools.Esdia;
 
@@ -26,7 +27,6 @@ public class InteractiveView extends BaseView {
     private static final String BLUE = "\u001B[34m";
     private static final String RED = "\u001B[31m";
     private static final String BRAND = BOLD + MAGENTA;
-    private static final String THEME_NAME = "EXAMINATOR 3000";
 
     private String colorize(String text, String color) {
         return color + text + RESET;
@@ -35,12 +35,17 @@ public class InteractiveView extends BaseView {
     private void printHeader(String title) {
         String bar = "============================================================";
         System.out.println(colorize(bar, BLUE));
-        System.out.println(colorize("★  " + title, BOLD + CYAN));
+        System.out.println(colorize("★  " + title, BRAND));
         System.out.println(colorize(bar, BLUE));
     }
 
     private void printDivider() {
         System.out.println(colorize("------------------------------------------------------------", MAGENTA));
+    }
+
+    private void renderStatusBar(String left, String right) {
+        String spacing = " ".repeat(Math.max(1, 60 - left.length() - right.length()));
+        System.out.println(colorize("⏺ " + left + spacing + right + " ⏺", DIM + CYAN));
     }
 
     private void animateProgress(String label) {
@@ -98,6 +103,25 @@ public class InteractiveView extends BaseView {
         }
         System.out.print("\r" + colorize(message, color) + "\n");
     }
+
+    private Thread startSpinner(String label, AtomicBoolean running) {
+        Thread spinner = new Thread(() -> {
+            String[] frames = {"⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷"};
+            int idx = 0;
+            while (running.get()) {
+                System.out.print("\r" + colorize(label + " " + frames[idx % frames.length], YELLOW));
+                idx++;
+                try {
+                    Thread.sleep(120);
+                } catch (InterruptedException ignored) {}
+            }
+            System.out.print("\r" + colorize(label + " ✓", GREEN) + "\n");
+        });
+        spinner.setDaemon(true);
+        spinner.start();
+        return spinner;
+    }
+    /* ---- BRANDING END ---- */
     /* ---------------- UI ENHANCEMENTS END ---------------- */
     
     /* CONSTRUCTOR */
@@ -114,8 +138,7 @@ public class InteractiveView extends BaseView {
 
         boolean exit = false;
 
-        printHeader("WELCOME TO EXAMINATOR 3000");
-        animateBanner("Your question bank, reinvented.");
+        printHeader("WELCOME");
         pulseMessage("Navigate with numbers and press ENTER", CYAN, 3);
         boolean autoSave = Esdia.yesOrNo("Do you want to autosave after each operation? (y/n): ");
         controller.setAutoSave(autoSave);
@@ -158,13 +181,13 @@ public class InteractiveView extends BaseView {
     // METODO MOSTRAR MENSAJE //
     @Override
     public void showMessage(String message) {
-        System.out.println(message);
+        System.out.println(colorize("✓ " + message, GREEN));
     }
 
     // METODO MOSTRAR MENSAJE DE ERROR //
     @Override
     public void showErrorMessage(String errorMessage) {
-        System.err.println("Error: " + errorMessage);
+        System.err.println(colorize("✖ Error: " + errorMessage, RED));
     }
 
 
@@ -293,6 +316,7 @@ public class InteractiveView extends BaseView {
     // -- Preguntar el tipo de listado --
     printHeader("LIST QUESTIONS");
     pulseMessage("Choose how you want to see the questions", MAGENTA, 2);
+    renderStatusBar("Questions loaded: " + controller.getAllQuestions().size(), "");
     printMenuItem(1, "List all questions", "📚", CYAN);
     printMenuItem(2, "List questions by topic", "🎯", CYAN);
     printDivider();
@@ -367,6 +391,7 @@ public class InteractiveView extends BaseView {
             // -- Menú Import/Export --
             printHeader("IMPORT / EXPORT");
             pulseMessage("Backup your work or restore it", BLUE, 2);
+            renderStatusBar("Backup: JSON", "");
             animateSectionTransition("Choose backup action");
             printMenuItem(1, "Export questions to JSON", "⬆️", CYAN);
             printMenuItem(2, "Import questions from JSON", "⬇️", CYAN);
@@ -416,6 +441,7 @@ public class InteractiveView extends BaseView {
 
     private void optionAutomaticQuestion() {
 
+        clearScreen();
         // Comentario: primero verificamos si existen QuestionCreators cargados.
         if (!controller.hasQuestionCreators()) {
             showErrorMessage("There are no automatic question generators available. Please start the app with -question-creator.");
@@ -423,10 +449,13 @@ public class InteractiveView extends BaseView {
             return;
         }
 
+        printHeader("GEMINI QUESTION CREATION 🤖");
+        pulseMessage("Let the AI propose a new question", CYAN, 2);
+
         List<String> descriptions = controller.getQuestionCreatorDescriptions();
-        System.out.println("Available generators:");
+        System.out.println(colorize("Available generators:", BOLD + CYAN));
         for (int i = 0; i < descriptions.size(); i++) {
-            System.out.println((i + 1) + ". " + descriptions.get(i));
+            System.out.println(colorize((i + 1) + ". " + descriptions.get(i), CYAN));
         }
         int selectedGenerator = Esdia.readInt("Choose generator: ", 1, descriptions.size()) - 1;
 
@@ -435,7 +464,17 @@ public class InteractiveView extends BaseView {
 
         try {
             // Pedimos al controller que genere una pregunta
-            Question generated = controller.generateAutomaticQuestion(selectedGenerator, topic);
+            AtomicBoolean running = new AtomicBoolean(true);
+            Thread spinner = startSpinner("Contacting Gemini", running);
+            Question generated;
+            try {
+                generated = controller.generateAutomaticQuestion(selectedGenerator, topic);
+            } finally {
+                running.set(false);
+                try {
+                    spinner.join();
+                } catch (InterruptedException ignored) {}
+            }
 
             if (generated == null) {
                 showErrorMessage("No question could be generated for this topic.");
@@ -446,9 +485,16 @@ public class InteractiveView extends BaseView {
             showGeneratedQuestionPreview(generated);
 
             // Confirmación
-            String confirm = Esdia.readString("Do you want to add this question to the database? (Y/N): ").trim().toUpperCase();
+            String confirm;
+            while (true) {
+                confirm = Esdia.readString("Do you want to add this question to the database? (Y/N): ").trim().toUpperCase();
+                if (confirm.equals("Y") || confirm.equals("N") || confirm.equals("S")) {
+                    break;
+                }
+                showErrorMessage("Please answer Y or N.");
+            }
 
-            if (confirm.equals("Y")) {
+            if (confirm.equals("Y") || confirm.equals("S")) {
                 try {
                     controller.addGeneratedQuestion(generated);
                     showMessage("Question added successfully.");
@@ -469,20 +515,24 @@ public class InteractiveView extends BaseView {
 
         clearScreen();
 
-        System.out.println("\n=== AUTOMATIC QUESTION PREVIEW ===");
-
-        System.out.println("Statement: " + q.getStatement());
-        System.out.println("Topics: " + q.getTopics());
-        System.out.println("Author: " + q.getAuthor());
-
-        System.out.println("Options:");
+        printHeader("AUTOMATIC QUESTION PREVIEW 🤖");
+        printDivider();
+        System.out.println(colorize("Statement:", BOLD + CYAN));
+        System.out.println(colorize(q.getStatement(), YELLOW));
+        printDivider();
+        System.out.println(colorize("Topics: ", BOLD + MAGENTA) + colorize(q.getTopics().toString(), CYAN));
+        System.out.println(colorize("Author: ", BOLD + MAGENTA) + colorize(q.getAuthor(), GREEN));
+        printDivider();
+        System.out.println(colorize("Options:", BOLD + CYAN));
 
         int i = 1;
         for (Option op : q.getOptions()) {
-            System.out.println(i + ". " + op.getText() +" (correct: " + op.isCorrect() + ")");
-            System.out.println("   Rationale: " + op.getRationale());
+            String prefix = op.isCorrect() ? colorize("✔", GREEN) : colorize("✖", RED);
+            System.out.println(prefix + " " + colorize(i + ". " + op.getText(), BOLD + YELLOW));
+            System.out.println(colorize("   Rationale: ", DIM + CYAN) + colorize(op.getRationale(), CYAN));
             i++;
         }
+        printDivider();
     }
 
     private String chooseTopic(boolean includeAll) {
@@ -508,6 +558,7 @@ public class InteractiveView extends BaseView {
     private void optionExamMode() {
         clearScreen();
         printHeader("EXAM MODE 🧠");
+        renderStatusBar("Backup: " + controller.getBackupDescription(), "");
 
         String topic = chooseTopic(true);
         if (topic == null) return;

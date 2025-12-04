@@ -36,7 +36,12 @@ public class App {
             if ("-question-creator".equalsIgnoreCase(args[i]) && i + 2 < args.length) {
                 String modelId = args[i + 1];
                 String apiKey = args[i + 2];
-                creators.add(new GeminiQuestionCreator(modelId, apiKey));
+                for (String singleModel : modelId.split(",")) {
+                    String clean = singleModel.trim();
+                    if (!clean.isEmpty()) {
+                        creators.add(new GeminiQuestionCreator(clean, apiKey));
+                    }
+                }
                 i += 2;
             }
         }

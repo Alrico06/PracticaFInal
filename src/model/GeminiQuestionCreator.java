@@ -69,10 +69,7 @@ public class GeminiQuestionCreator implements QuestionCreator {
             topics.addAll(normalizeTopics(dto.topics));
             topics.add(topic.trim().toUpperCase());
 
-            return new Question(dto.author != null ? dto.author : description,
-                    dto.statement,
-                    topics,
-                    options);
+            return new Question(description, dto.statement, topics, options);
         } catch (Exception e) {
             // Fallback local para no dejar la opción vacía
             return fallbackQuestion(topic, e.getMessage());
@@ -116,7 +113,7 @@ public class GeminiQuestionCreator implements QuestionCreator {
         Set<String> topics = new HashSet<>();
         topics.add(normalizedTopic);
 
-        return new Question("GEMINI-FALLBACK", statement, topics, options);
+        return new Question(description, statement, topics, options);
     }
 
     /**
