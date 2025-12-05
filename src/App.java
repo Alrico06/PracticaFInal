@@ -1,11 +1,8 @@
 import controller.Controller;
-import model.BinaryRepository;
 import model.GeminiQuestionCreator;
 import model.Model;
-import model.QuestionBackupIO;
 import model.QuestionCreator;
 import model.RepositoryException;
-import model.JSONQuestionBackupIO;
 import view.InteractiveView;
 
 import java.util.ArrayList;
@@ -16,10 +13,7 @@ public class App {
         try {
             List<QuestionCreator> creators = parseQuestionCreators(args);
 
-            BinaryRepository repository = new BinaryRepository("questions.bin");
-            QuestionBackupIO backupIO = new JSONQuestionBackupIO();
-
-            Model model = new Model(repository, backupIO, creators);
+            Model model = Model.createDefault(creators);
             Controller controller = new Controller(model);
             InteractiveView view = new InteractiveView(controller);
             controller.setView(view);

@@ -77,11 +77,12 @@ public class GeminiQuestionCreator implements QuestionCreator {
     }
 
     private String buildPrompt(String topic) {
-        return "Devuelve EXCLUSIVAMENTE un JSON válido con el esquema {\"author\":string,\"statement\":string,"
+        return "Return ONLY valid JSON with schema {\"author\":string,\"statement\":string,"
                 + "\"topics\":string[],\"options\":[{\"text\":string,\"rationale\":string,\"correct\":boolean}]}. "
-                + "Genera una pregunta tipo test sobre el tema \"" + topic + "\" con exactamente 4 opciones y solo una correcta. "
-                + "Incluye al menos un topic en mayúsculas relacionado con \"" + topic + "\". "
-                + "La rationale debe explicar por qué es correcta o incorrecta cada opción.";
+                + "Write everything in ENGLISH. "
+                + "Generate a multiple-choice question about \"" + topic + "\" with exactly 4 options and only one correct. "
+                + "Include at least one TOPIC in uppercase related to \"" + topic + "\". "
+                + "The rationale must explain why each option is correct or incorrect.";
     }
 
     private Set<String> normalizeTopics(List<String> raw) {

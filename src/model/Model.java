@@ -9,6 +9,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+// Persistence implementations reside in the model layer
+import model.BinaryRepository;
+import model.JSONQuestionBackupIO;
+
 public class Model {
 
     private final IRepository repository;
@@ -23,6 +27,15 @@ public class Model {
         this.backupHandler = backupHandler;
         this.questionCreators = questionCreators != null ? questionCreators : new ArrayList<>();
         this.questions = new ArrayList<>(repository.getAllQuestions());
+    }
+
+    /**
+     * Factory that instantiates default persistence components inside the model layer.
+     */
+    public static Model createDefault(List<QuestionCreator> questionCreators) throws RepositoryException {
+        IRepository repository = new BinaryRepository("questions.bin");
+        QuestionBackupIO backupHandler = new JSONQuestionBackupIO();
+        return new Model(repository, backupHandler, questionCreators);
     }
 
     /* ============================================================
@@ -60,6 +73,7 @@ public class Model {
             List<String> optionRationales,
             int correctIndex
     ) throws RepositoryException {
+        validateBaseFields(author, statement, topics);
         validateOptions(optionTexts, optionRationales, correctIndex);
 
         List<Option> options = new ArrayList<>();
@@ -81,6 +95,33 @@ public class Model {
         }
         if (correctIndex < 1 || correctIndex > 4) {
             throw new RepositoryException("Correct option must be between 1 and 4.");
+        }
+        for (String t : texts) {
+            if (t == null || t.trim().isEmpty()) {
+                throw new RepositoryException("Option text cannot be empty.");
+            }
+        }
+        for (String r : rationales) {
+            if (r == null || r.trim().isEmpty()) {
+                throw new RepositoryException("Option rationale cannot be empty.");
+            }
+        }
+    }
+
+    private void validateBaseFields(String author, String statement, Set<String> topics) throws RepositoryException {
+        if (author == null || author.trim().isEmpty()) {
+            throw new RepositoryException("Author cannot be empty.");
+        }
+        if (statement == null || statement.trim().isEmpty()) {
+            throw new RepositoryException("Statement cannot be empty.");
+        }
+        if (topics == null || topics.isEmpty()) {
+            throw new RepositoryException("Topics cannot be empty.");
+        }
+        for (String t : topics) {
+            if (t == null || t.trim().isEmpty()) {
+                throw new RepositoryException("Topics cannot contain empty values.");
+            }
         }
     }
 
@@ -123,6 +164,9 @@ public class Model {
     }
 
     public void modifyAuthor(Question q, String newAuthor) throws RepositoryException {
+        if (newAuthor == null || newAuthor.trim().isEmpty()) {
+            throw new RepositoryException("Author cannot be empty.");
+        }
         q.setAuthor(newAuthor);
         repository.modifyQuestion(q);
         refreshCache();
@@ -130,6 +174,7 @@ public class Model {
     }
 
     public void modifyTopics(Question q, Set<String> newTopics) throws RepositoryException {
+        validateBaseFields(q.getAuthor(), q.getStatement(), newTopics);
         q.setTopics(newTopics);
         repository.modifyQuestion(q);
         refreshCache();
@@ -137,6 +182,9 @@ public class Model {
     }
 
     public void modifyStatement(Question q, String newStatement) throws RepositoryException {
+        if (newStatement == null || newStatement.trim().isEmpty()) {
+            throw new RepositoryException("Statement cannot be empty.");
+        }
         q.setStatement(newStatement);
         repository.modifyQuestion(q);
         refreshCache();
@@ -218,11 +266,21 @@ public class Model {
     }
 
     public Question addGeneratedQuestion(Question q) throws RepositoryException {
-        if (q != null) {
-            repository.addQuestion(q);
-            refreshCache();
-            persistIfNeeded();
+        if (q == null) {
+            throw new RepositoryException("Generated question is empty.");
         }
+        validateBaseFields(q.getAuthor(), q.getStatement(), q.getTopics());
+        List<String> texts = q.getOptions().stream().map(Option::getText).collect(Collectors.toList());
+        List<String> rationales = q.getOptions().stream().map(Option::getRationale).collect(Collectors.toList());
+        int correctIndex = 1 + q.getOptions().indexOf(
+                q.getOptions().stream().filter(Option::isCorrect).findFirst()
+                        .orElseThrow(() -> new RepositoryException("Generated question must have one correct option."))
+        );
+        validateOptions(texts, rationales, correctIndex);
+
+        repository.addQuestion(q);
+        refreshCache();
+        persistIfNeeded();
         return q;
     }
 
