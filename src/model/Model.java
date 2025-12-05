@@ -222,6 +222,10 @@ public class Model {
 
     public void importQuestions(String fileName) throws QuestionBackupIOException, RepositoryException {
         List<Question> imported = backupHandler.importQuestions(normalizeFileName(fileName));
+        // Política: si alguna pregunta es inválida, abortar toda la importación.
+        for (Question q : imported) {
+            validateImportedQuestion(q);
+        }
 
         for (Question q : imported) {
             boolean exists = questions.stream()
@@ -272,10 +276,7 @@ public class Model {
         validateBaseFields(q.getAuthor(), q.getStatement(), q.getTopics());
         List<String> texts = q.getOptions().stream().map(Option::getText).collect(Collectors.toList());
         List<String> rationales = q.getOptions().stream().map(Option::getRationale).collect(Collectors.toList());
-        int correctIndex = 1 + q.getOptions().indexOf(
-                q.getOptions().stream().filter(Option::isCorrect).findFirst()
-                        .orElseThrow(() -> new RepositoryException("Generated question must have one correct option."))
-        );
+        int correctIndex = extractSingleCorrectIndex(q.getOptions());
         validateOptions(texts, rationales, correctIndex);
 
         repository.addQuestion(q);
@@ -323,16 +324,16 @@ public class Model {
         Question q = session.getQuestions().get(questionIndex);
 
         if (answerIndex == 0) {
-            return "Pregunta no respondida. Correcta: " + findCorrectOption(q).getText();
+            return "Unanswered. Correct: " + findCorrectOption(q).getText();
         }
 
         Option chosen = q.getOptions().get(answerIndex - 1);
         Option correct = findCorrectOption(q);
         if (chosen.isCorrect()) {
-            return "Respuesta correcta. Rationale: " + chosen.getRationale();
+            return "Correct. Rationale: " + chosen.getRationale();
         }
-        return "Respuesta incorrecta. Elegiste: " + chosen.getText() +
-                " (" + chosen.getRationale() + "). Correcta: " +
+        return "Incorrect. You chose: " + chosen.getText() +
+                " (" + chosen.getRationale() + "). Correct: " +
                 correct.getText() + " (" + correct.getRationale() + ").";
     }
 
@@ -340,7 +341,7 @@ public class Model {
         return q.getOptions().stream()
                 .filter(Option::isCorrect)
                 .findFirst()
-                .orElse(q.getOptions().get(0));
+                .orElseThrow(() -> new IllegalStateException("Question has no correct option set"));
     }
 
     public ExamResult finishExam(ExamSession session) {
@@ -379,5 +380,39 @@ public class Model {
 
     private void refreshCache() throws RepositoryException {
         this.questions = new ArrayList<>(repository.getAllQuestions());
+    }
+
+    private int extractSingleCorrectIndex(List<Option> options) throws RepositoryException {
+        if (options == null || options.size() != 4) {
+            throw new RepositoryException("Questions must have exactly 4 options.");
+        }
+        int correctIndex = -1;
+        for (int i = 0; i < options.size(); i++) {
+            Option opt = options.get(i);
+            if (opt == null) {
+                throw new RepositoryException("Option cannot be null.");
+            }
+            if (opt.isCorrect()) {
+                if (correctIndex != -1) {
+                    throw new RepositoryException("Questions must have exactly one correct option.");
+                }
+                correctIndex = i + 1;
+            }
+        }
+        if (correctIndex == -1) {
+            throw new RepositoryException("Questions must have exactly one correct option.");
+        }
+        return correctIndex;
+    }
+
+    private void validateImportedQuestion(Question q) throws RepositoryException {
+        if (q == null) {
+            throw new RepositoryException("Invalid question data.");
+        }
+        validateBaseFields(q.getAuthor(), q.getStatement(), q.getTopics());
+        List<String> texts = q.getOptions().stream().map(Option::getText).collect(Collectors.toList());
+        List<String> rationales = q.getOptions().stream().map(Option::getRationale).collect(Collectors.toList());
+        int correctIndex = extractSingleCorrectIndex(q.getOptions());
+        validateOptions(texts, rationales, correctIndex);
     }
 }

@@ -65,7 +65,7 @@ public class JSONQuestionBackupIO implements QuestionBackupIO {
 
     @Override
     public String getBackupIODescription() {
-        return "JSON backup in project data directory";
+        return "JSON backup in user home directory";
     }
 
     private Path resolvePath(String fileName) {
