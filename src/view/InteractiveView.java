@@ -193,6 +193,16 @@ public class InteractiveView extends BaseView {
 
     /* METODOS AUXILIARES */
 
+    private String readNonEmptyString(String prompt) {
+        String value = "";
+        while (value.isBlank()) {
+            value = Esdia.readString(prompt).trim();
+            if (value.isBlank()) {
+                showErrorMessage("This field cannot be empty.");
+            }
+        }
+        return value;
+    }
 
     private void clearScreen() {
         try {
@@ -264,12 +274,12 @@ public class InteractiveView extends BaseView {
         clearScreen();
         showMessage("=== Create New Question ===");
 
-        String author = Esdia.readString("Enter author: ");
+        String author = readNonEmptyString("Enter author: ");
 
-        String statement = Esdia.readString("Enter question statement: ");
+        String statement = readNonEmptyString("Enter question statement: ");
 
         //Los temas se introducirán separados por comas (ej: "TEMA 1, TEMA 2, TEMA 3")
-        String topicsInput = Esdia.readString("Enter topics (comma separated): ");
+        String topicsInput = readNonEmptyString("Enter topics (comma separated): ");
 
         // normalizo y guardo en un HashSet para evitar duplicados
         HashSet<String> topics = new HashSet<>();
@@ -286,11 +296,11 @@ public class InteractiveView extends BaseView {
             System.out.println("\n--- Option " + i + " ---");
 
             // Texto de la opción
-            String optText = Esdia.readString("Enter option text: ");
+            String optText = readNonEmptyString("Enter option text: ");
             optionTexts.add(optText);
 
             // Rationale
-            String optRat = Esdia.readString("Enter option rationale: ");
+            String optRat = readNonEmptyString("Enter option rationale: ");
             optionRationales.add(optRat);
         }
 
@@ -729,7 +739,7 @@ public class InteractiveView extends BaseView {
     // Comentario: modificar el autor de la pregunta
     private void modifyAuthor(Question question) {
 
-        String newAuthor = Esdia.readString("Enter new author: ");
+        String newAuthor = readNonEmptyString("Enter new author: ");
 
         try {
             controller.modifyAuthor(question, newAuthor);
@@ -742,7 +752,7 @@ public class InteractiveView extends BaseView {
     // Comentario: modificar los temas, siempre en mayúsculas
     private void modifyTopics(Question question) {
 
-        String input = Esdia.readString("Enter new topics (comma separated): ");
+        String input = readNonEmptyString("Enter new topics (comma separated): ");
 
         HashSet<String> newTopics = new HashSet<>();
 
@@ -761,7 +771,7 @@ public class InteractiveView extends BaseView {
     // Comentario: modificar el enunciado de la pregunta
     private void modifyStatement(Question question) {
 
-        String newStatement = Esdia.readString("Enter new statement: ");
+        String newStatement = readNonEmptyString("Enter new statement: ");
 
         try {
             controller.modifyStatement(question, newStatement);
@@ -781,9 +791,9 @@ public class InteractiveView extends BaseView {
         for (int i = 1; i <= 4; i++) {
             System.out.println("\n--- Option " + i + " ---");
 
-            newTexts.add(Esdia.readString("Enter option text: "));
+            newTexts.add(readNonEmptyString("Enter option text: "));
 
-            newRationales.add(Esdia.readString("Enter option rationale: "));
+            newRationales.add(readNonEmptyString("Enter option rationale: "));
         }
 
         // Elegir la correcta
