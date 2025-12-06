@@ -53,6 +53,9 @@ public class JSONQuestionBackupIO implements QuestionBackupIO {
     @Override
     public List<Question> importQuestions(String fileName) throws QuestionBackupIOException {
         Path target = resolvePath(fileName);
+        if (!Files.exists(target) || !Files.isRegularFile(target)) {
+            throw new QuestionBackupIOException("File not found: " + target);
+        }
         try (FileReader reader = new FileReader(target.toFile())) {
             Type listType = new TypeToken<List<Question>>() {}.getType();
             List<Question> list = gson.fromJson(reader, listType);

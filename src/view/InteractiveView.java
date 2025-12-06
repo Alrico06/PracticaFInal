@@ -433,6 +433,7 @@ public class InteractiveView extends BaseView {
             showMessage("Questions exported successfully.");
         } catch (Exception e) {
             showErrorMessage("Export failed: " + e.getMessage());
+            Esdia.readString("Press ENTER to continue.");
         }
     }
 
@@ -446,6 +447,7 @@ public class InteractiveView extends BaseView {
             showMessage("Questions imported successfully.");
         } catch (Exception e) {
             showErrorMessage("Import failed: " + e.getMessage());
+            Esdia.readString("Press ENTER to continue.");
         }
     }
 
