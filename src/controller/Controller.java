@@ -1,12 +1,12 @@
 package controller;
 
+import backup.QuestionBackupIOException;
 import model.ExamResult;
 import model.ExamSession;
 import model.Model;
 import model.Question;
-import model.QuestionCreatorException;
-import model.QuestionBackupIOException;
-import model.RepositoryException;
+import questionCreator.QuestionCreatorException;
+import repository.RepositoryException;
 import view.BaseView;
 
 import java.util.List;

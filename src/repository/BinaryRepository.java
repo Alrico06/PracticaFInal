@@ -1,4 +1,4 @@
-package model;
+package repository;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.Question;
 
 /**
  * Implementación binaria del repositorio, usando serialización estándar.

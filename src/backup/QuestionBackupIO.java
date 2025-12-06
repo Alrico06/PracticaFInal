@@ -1,6 +1,8 @@
-package model;
+package backup;
 
 import java.util.List;
+
+import model.Question;
 
 /**
  * Abstracción para importar/exportar preguntas a distintos formatos.

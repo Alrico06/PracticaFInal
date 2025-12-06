@@ -1,4 +1,4 @@
-package model;
+package backup;
 
 /**
  * Excepción específica para operaciones de importación/exportación de backups.

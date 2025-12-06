@@ -1,9 +1,12 @@
-package model;
+package questionCreator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import model.Option;
+import model.Question;
 
 /**
  * Implementación de QuestionCreator usando Gemini (GenAI Fat-JAR).

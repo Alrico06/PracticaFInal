@@ -1,6 +1,9 @@
-package model;
+package questionCreator;
 
 import java.util.*;
+
+import model.Option;
+import model.Question;
 
 public class SimpleQuestionCreator implements QuestionCreator {
 

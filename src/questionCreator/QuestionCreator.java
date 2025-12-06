@@ -1,4 +1,6 @@
-package model;
+package questionCreator;
+
+import model.Question;
 
 public interface QuestionCreator {
 

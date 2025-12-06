@@ -1,12 +1,12 @@
-import controller.Controller;
-import model.GeminiQuestionCreator;
-import model.Model;
-import model.QuestionCreator;
-import model.RepositoryException;
-import view.InteractiveView;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import controller.Controller;
+import model.Model;
+import questionCreator.GeminiQuestionCreator;
+import questionCreator.QuestionCreator;
+import repository.RepositoryException;
+import view.InteractiveView;
 
 public class App {
     public static void main(String[] args) {

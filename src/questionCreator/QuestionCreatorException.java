@@ -1,4 +1,4 @@
-package model;
+package questionCreator;
 
 /**
  * Excepción para envolver errores derivados de la generación automática

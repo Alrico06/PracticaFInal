@@ -1,4 +1,4 @@
-package model;
+package repository;
 
 /**
  * Excepción específica para errores de repositorio/persistencia.

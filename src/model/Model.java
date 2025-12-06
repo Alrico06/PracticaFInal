@@ -9,9 +9,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-// Persistence implementations reside in the model layer
-import model.BinaryRepository;
-import model.JSONQuestionBackupIO;
+import backup.JSONQuestionBackupIO;
+import backup.QuestionBackupIO;
+import backup.QuestionBackupIOException;
+import questionCreator.QuestionCreator;
+import questionCreator.QuestionCreatorException;
+import repository.BinaryRepository;
+import repository.IRepository;
+import repository.RepositoryException;
 
 public class Model {
 

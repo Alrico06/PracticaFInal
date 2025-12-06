@@ -1,4 +1,4 @@
-package model;
+package backup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.Question;
 
 /**
  * Implementación de exportación/importación en JSON.

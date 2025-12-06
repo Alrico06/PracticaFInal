@@ -236,6 +236,19 @@ public class InteractiveView extends BaseView {
         System.out.println(colorize("🚪 0. Exit", RED));
     }
 
+
+    // Mostrar el menu CRUD //
+    private void showCRUDMenu() {
+
+        clearScreen();
+        printHeader("CRUD MENU");
+        pulseMessage("Manage your bank of questions", GREEN, 2);
+        printMenuItem(1, "Create new question", "➕", CYAN);
+        printMenuItem(2, "List questions", "📋", CYAN);
+        printDivider();
+        System.out.println(colorize("🔙 0. Back to main menu", RED));
+    }
+
     // Gestionar la opción CRUD //
     private void optionCRUD() {
 
@@ -253,18 +266,6 @@ public class InteractiveView extends BaseView {
                 default -> showErrorMessage("Invalid option.");
             }
         }
-    }
-
-    // Mostrar el menu CRUD //
-    private void showCRUDMenu() {
-
-        clearScreen();
-        printHeader("CRUD MENU");
-        pulseMessage("Manage your bank of questions", GREEN, 2);
-        printMenuItem(1, "Create new question", "➕", CYAN);
-        printMenuItem(2, "List questions", "📋", CYAN);
-        printDivider();
-        System.out.println(colorize("🔙 0. Back to main menu", RED));
     }
 
     

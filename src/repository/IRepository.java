@@ -1,6 +1,8 @@
-package model;
+package repository;
 
 import java.util.List;
+
+import model.Question;
 
 /**
  * Abstracción de acceso a persistencia del banco de preguntas.
