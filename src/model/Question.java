@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Representa una pregunta del banco de preguntas.
- * Cada pregunta tiene un UUID único, autor, enunciado, temas y 4 opciones.
- */
 public class Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -22,7 +18,6 @@ public class Question implements Serializable {
     private List<Option> options;
     private LocalDateTime creationDate;
 
-    /** Constructor usado cuando se crea una nueva pregunta */
     public Question(
             String author,
             String statement,
@@ -37,7 +32,6 @@ public class Question implements Serializable {
         this.creationDate = LocalDateTime.now();
     }
 
-    /** Constructor usado cuando se importa desde JSON */
     public Question(
             UUID id,
             String author,
@@ -54,7 +48,6 @@ public class Question implements Serializable {
         this.creationDate = creationDate;
     }
 
-    // ---- NORMALIZADOR DE TEMAS ---- //
     private Set<String> normalizeTopics(Set<String> raw) {
         Set<String> result = new HashSet<>();
         for (String t : raw) {
@@ -64,8 +57,6 @@ public class Question implements Serializable {
         }
         return result;
     }
-
-    // ------------------ GETTERS ------------------ //
 
     public UUID getId() {
         return id;
@@ -90,8 +81,6 @@ public class Question implements Serializable {
     public LocalDateTime getCreationDate() {
         return creationDate;
     }
-
-    // ---------------- MODIFICADORES ---------------- //
 
     public void setAuthor(String newAuthor) {
         this.author = newAuthor;

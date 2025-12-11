@@ -1,8 +1,5 @@
 package backup;
 
-/**
- * Excepción específica para operaciones de importación/exportación de backups.
- */
 public class QuestionBackupIOException extends Exception {
 
     public QuestionBackupIOException(String message) {

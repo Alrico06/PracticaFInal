@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public class Controller {
-    
 
     private Model model;
     private BaseView view;
@@ -40,6 +39,7 @@ public class Controller {
 
     public void start() {
         if (view != null) {
+            // Mostrar cuántas preguntas se han cargado al iniciar
             view.showMessage("Loaded " + model.getQuestionCount() + " questions from storage. Backup handler: " + model.getBackupDescription());
             view.init();
         }
@@ -62,21 +62,17 @@ public class Controller {
         model.createQuestion(author, statement, topics, optionTexts, optionRationales, correctIndex);
     }
 
-
     public List<Question> getAllQuestions() {
         return model.getAllQuestionsSorted();
     }
-
 
     public List<Question> getQuestionsByTopic(String topic) {
         return model.getQuestionsByTopic(topic);
     }
 
-
     public Question getQuestionById(UUID id) {
         return model.getQuestionById(id);
     }
-
 
     public void deleteQuestion(Question q) {
         try {
@@ -86,16 +82,13 @@ public class Controller {
         }
     }
 
-
     public void exportQuestions(String fileName) throws QuestionBackupIOException {
         model.exportQuestions(fileName);
     }
 
-
     public void importQuestions(String fileName) throws QuestionBackupIOException, RepositoryException {
         model.importQuestions(fileName);
     }
-
 
     public boolean hasQuestionCreators() {
         return model.hasQuestionCreators();
@@ -109,11 +102,9 @@ public class Controller {
         return model.generateAutomaticQuestion(creatorIndex, topic);
     }
 
-
     public void addGeneratedQuestion(Question q) throws RepositoryException {
         model.addGeneratedQuestion(q);
     }
-
 
     public int getMaxQuestionsForTopic(String topic) {
         return model.getMaxQuestionsForTopic(topic);

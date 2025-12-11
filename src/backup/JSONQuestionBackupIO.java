@@ -18,9 +18,6 @@ import java.util.List;
 
 import model.Question;
 
-/**
- * Implementación de exportación/importación en JSON.
- */
 public class JSONQuestionBackupIO implements QuestionBackupIO {
 
     private final Gson gson;

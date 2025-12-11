@@ -11,9 +11,6 @@ import java.util.List;
 
 import model.Question;
 
-/**
- * Implementación binaria del repositorio, usando serialización estándar.
- */
 public class BinaryRepository implements IRepository {
 
     private final Path filePath;
@@ -27,7 +24,7 @@ public class BinaryRepository implements IRepository {
         try {
             Files.createDirectories(homeDir);
         } catch (Exception e) {
-            // si no se puede crear el home, usaremos la ruta absoluta igualmente
+
         }
         this.filePath = homeDir.resolve(fileName);
         this.cache = loadFromDisk();
@@ -61,7 +58,6 @@ public class BinaryRepository implements IRepository {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<Question> getAllQuestions() throws RepositoryException {
         return new ArrayList<>(cache);
     }

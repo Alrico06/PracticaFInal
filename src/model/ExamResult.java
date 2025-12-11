@@ -1,9 +1,5 @@
 package model;
 
-/**
- * Clase que representa el resultado de un examen.
- * Contiene aciertos, fallos, no respondidas, nota sobre 10 y duración.
- */
 public class ExamResult {
 
     private final int correct;
@@ -20,7 +16,6 @@ public class ExamResult {
         this.durationSeconds = durationSeconds;
     }
 
-    // --- GETTERS --- //
     public int getCorrect() {
         return correct;
     }

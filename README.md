@@ -1,131 +1,52 @@
-📌 Descripción del proyecto
+Aplicación de Gestión de Preguntas (MVC)
+========================================
 
-Este proyecto implementa un sistema de gestión de preguntas tipo test siguiendo el patrón Modelo–Vista–Controlador (MVC).
-Permite crear, listar, modificar y eliminar preguntas, gestionar archivos JSON de importación/exportación, generar preguntas automáticas y ejecutar un modo examen.
+Proyecto de consola para gestionar un banco de preguntas tipo test: creación, listado, edición, borrado, importación/exportación JSON, generación automática y modo examen.
 
-El objetivo es desarrollar una aplicación estructurada, modular y fácilmente extensible, acorde al enunciado de la práctica final.
+Estructura de paquetes
+----------------------
+- `app.App`: arranque de la aplicación.
+- `controller/`: coordinación vista ↔ modelo.
+- `view/`: interfaz de consola (`InteractiveView`).
+- `model/`: dominio (`Question`, `Option`, `ExamSession`, etc.).
+- `repository/`: persistencia binaria (`BinaryRepository`).
+- `backup/`: importación/exportación JSON.
+- `questionCreator/`: generadores automáticos (incl. `GeminiQuestionCreator`).
 
-🏛 Arquitectura del proyecto (MVC)
+Persistencia y backups
+----------------------
+- Datos principales: binario `questions.bin` en el directorio home del usuario.
+- Backups: JSON en el mismo directorio home (nombre por defecto `backup.json`).
 
-El proyecto está organizado en tres paquetes principales:
-
-src/
- ├─ controller/
- │    └─ Controller.java
- ├─ model/
- │    ├─ Model.java
- │    ├─ Question.java
- │    ├─ Option.java
- │    ├─ ExamResult.java
- │    ├─ IRepository.java
- │    ├─ BinaryRepository.java
- │    ├─ JSONQuestionBackupIO.java
- │    ├─ QuestionCreator.java
- │    └─ (posibles implementaciones adicionales)
- └─ view/
-      ├─ BaseView.java
-      └─ InteractiveView.java
-
-✔ Modelo
-
-Gestiona los datos y la lógica interna (preguntas, opciones, repositorios, carga/guardado).
-
-✔ Vista
-
-Implementada mediante consola (InteractiveView), es responsable de mostrar menús, recibir entradas del usuario y delegar toda la lógica al controlador.
-
-✔ Controlador
-
-Coordina la comunicación entre la vista y el modelo.
-Actúa como "director de orquesta" del flujo del programa.
-
-✨ Funciones principales
-🔹 CRUD de preguntas
-
-Crear preguntas (autor, temas, enunciado, 4 opciones, rationale y opción correcta)
-
-Listar preguntas (todas o filtradas por tema)
-
-Ver detalle de una pregunta
-
-Modificar pregunta (autor, temas, enunciado, opciones)
-
-Eliminar pregunta
-
-🔹 Importación / Exportación JSON
-
-Exporta todas las preguntas y temas a data/backup.json (o el nombre indicado) dentro del proyecto
-
-Importa preguntas desde el mismo directorio data/
-
-No importa elementos con UUID repetido
-
-🔹 Generación automática de preguntas
-
-Solo disponible si hay QuestionCreator cargado
-
-Solicita un tema
-
-Genera una pregunta automáticamente
-
-Muestra una vista previa
-
-Permite al usuario añadirla o descartarla
-
-🔹 Modo Examen
-
-Selección de número de preguntas
-
-Filtrado por tema o “ALL”
-
-Presentación secuencial de preguntas
-
-Registro de aciertos / fallos / no respondidas
-
-Cálculo de nota final sobre 10
-
-Resumen detallado con instancia ExamResult
-
-🧪 Uso
-▶ Compilación
+Ejecución
+---------
+```bash
 javac -d bin $(find src -name "*.java")
+java -cp bin App
+```
 
-▶ Ejecución
-java -cp bin app.App
+Generación automática con Gemini (opcional)
+-------------------------------------------
+Inicia con:
+```bash
+java -cp bin App -question-creator MODEL_ID API_KEY
+```
+Se puede pasar varios modelos separados por comas en `MODEL_ID`.
 
+Dependencias
+------------
+- Java 17+
+- Librería `com.coti.tools.Esdia` en el classpath (entrada de usuario).
+- Para Gemini: fat-jar de integración GenAI en el classpath (solo si se usa `GeminiQuestionCreator`).
 
-(Dependiendo de tu estructura de proyecto.)
+Funciones clave
+---------------
+- CRUD de preguntas (autor, enunciado, 4 opciones con justificación y correcta).
+- Listado por tema o global.
+- Importar/exportar JSON.
+- Generar preguntas automáticas (si hay `QuestionCreator` disponible).
+- Modo examen con cálculo de nota y resumen.
 
-📦 Requisitos
-
-Java 17+
-
-Biblioteca com.coti.tools.Esdia para entradas seguras
-
-Git (opcional, para control de versiones)
-
-📚 Características técnicas destacadas
-
-Arquitectura MVC estricta
-
-Separación clara de responsabilidades
-
-Repositorio binario y repositorio JSON
-
-Normalización automática de temas (mayúsculas)
-
-Manejo robusto de entradas del usuario
-
-Control de errores en operaciones del modelo
-
-Código modular, escalable y mantenible
-
-🙌 Autor
-
-Proyecto desarrollado por Álvaro Rico, como práctica final de Programación Orientada a Objetos.
-
-📄 Licencia
-
-Este proyecto está disponible bajo la licencia MIT.
-Puedes usar, modificar y distribuir libremente citando al autor.
-
+Créditos
+--------
+Práctica final desarrollada por Álvaro Rico. Licencia MIT.

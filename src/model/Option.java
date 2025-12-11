@@ -2,10 +2,6 @@ package model;
 
 import java.io.Serializable;
 
-/**
- * Representa una opción de respuesta en una pregunta.
- * Contiene texto, justificación (rationale) y si es correcta o no.
- */
 public class Option implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -14,14 +10,11 @@ public class Option implements Serializable {
     private String rationale;
     private boolean correct;
 
-    /** Constructor completo */
     public Option(String text, String rationale, boolean correct) {
         this.text = text;
         this.rationale = rationale;
         this.correct = correct;
     }
-
-    // --- GETTERS & SETTERS --- //
 
     public String getText() {
         return text;

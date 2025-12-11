@@ -31,23 +31,19 @@ public class Model {
         this.repository = repository;
         this.backupHandler = backupHandler;
         this.questionCreators = questionCreators != null ? questionCreators : new ArrayList<>();
+        // Cargar las preguntas guardadas en el binario al iniciar
         this.questions = new ArrayList<>(repository.getAllQuestions());
     }
 
-    /**
-     * Factory that instantiates default persistence components inside the model layer.
-     */
     public static Model createDefault(List<QuestionCreator> questionCreators) throws RepositoryException {
+        // Usar repositorio binario y backup JSON por defecto
         IRepository repository = new BinaryRepository("questions.bin");
         QuestionBackupIO backupHandler = new JSONQuestionBackupIO();
         return new Model(repository, backupHandler, questionCreators);
     }
 
-    /* ============================================================
-     *                    CONFIGURACIÓN DE GUARDADO
-     * ============================================================ 
-     */
     public void setAutoSave(boolean autoSave) {
+        // Activa o desactiva guardado automático
         this.autoSave = autoSave;
     }
 
@@ -56,6 +52,7 @@ public class Model {
     }
 
     public void persistState() throws RepositoryException {
+        // Guardar todas las preguntas en el archivo binario
         repository.saveAll(questions);
     }
 
@@ -65,11 +62,6 @@ public class Model {
         }
     }
 
-    /* ============================================================
-     *                    MÉTODOS DEL CRUD
-     * ============================================================ 
-     */
-
     public Question createQuestion(
             String author,
             String statement,
@@ -78,6 +70,7 @@ public class Model {
             List<String> optionRationales,
             int correctIndex
     ) throws RepositoryException {
+        // Validar datos y construir la nueva pregunta con sus opciones
         validateBaseFields(author, statement, topics);
         validateOptions(optionTexts, optionRationales, correctIndex);
 
@@ -144,6 +137,7 @@ public class Model {
     }
 
     public Set<String> getAvailableTopics() {
+        // Recoger todos los temas presentes en las preguntas cargadas
         Set<String> topics = new HashSet<>();
         for (Question q : questions) {
             topics.addAll(q.getTopics());
@@ -169,6 +163,7 @@ public class Model {
     }
 
     public void modifyAuthor(Question q, String newAuthor) throws RepositoryException {
+        // Cambiar el autor de una pregunta concreta
         if (newAuthor == null || newAuthor.trim().isEmpty()) {
             throw new RepositoryException("Author cannot be empty.");
         }
@@ -179,6 +174,7 @@ public class Model {
     }
 
     public void modifyTopics(Question q, Set<String> newTopics) throws RepositoryException {
+        // Sustituir los temas asociados a la pregunta
         validateBaseFields(q.getAuthor(), q.getStatement(), newTopics);
         q.setTopics(newTopics);
         repository.modifyQuestion(q);
@@ -187,6 +183,7 @@ public class Model {
     }
 
     public void modifyStatement(Question q, String newStatement) throws RepositoryException {
+        // Actualizar el enunciado de la pregunta
         if (newStatement == null || newStatement.trim().isEmpty()) {
             throw new RepositoryException("Statement cannot be empty.");
         }
@@ -202,6 +199,7 @@ public class Model {
             List<String> rationales,
             int correctIndex
     ) throws RepositoryException {
+        // Reemplazar todas las opciones y marcar la correcta
         validateOptions(texts, rationales, correctIndex);
 
         List<Option> newOptions = new ArrayList<>();
@@ -216,18 +214,14 @@ public class Model {
         persistIfNeeded();
     }
 
-    /* ============================================================
-     *                    IMPORT / EXPORT JSON
-     * ============================================================ 
-     */
-
     public void exportQuestions(String fileName) throws QuestionBackupIOException {
         backupHandler.exportQuestions(questions, normalizeFileName(fileName));
     }
 
     public void importQuestions(String fileName) throws QuestionBackupIOException, RepositoryException {
         List<Question> imported = backupHandler.importQuestions(normalizeFileName(fileName));
-        // Política: si alguna pregunta es inválida, abortar toda la importación.
+
+        // Validar todas las preguntas importadas antes de guardarlas
         for (Question q : imported) {
             validateImportedQuestion(q);
         }
@@ -252,11 +246,6 @@ public class Model {
         return fileName;
     }
 
-    /* ============================================================
-     *               PREGUNTAS AUTOMÁTICAS (ONE MORE THING)
-     * ============================================================
-     */
-
     public boolean hasQuestionCreators() {
         return !questionCreators.isEmpty();
     }
@@ -268,6 +257,7 @@ public class Model {
     }
 
     public Question generateAutomaticQuestion(int creatorIndex, String topic) throws QuestionCreatorException {
+        // Pedir a un generador automático una nueva pregunta
         if (creatorIndex < 0 || creatorIndex >= questionCreators.size()) {
             throw new QuestionCreatorException("Invalid generator selected");
         }
@@ -289,11 +279,6 @@ public class Model {
         persistIfNeeded();
         return q;
     }
-
-    /* ============================================================
-     *                      MODO EXAMEN
-     * ============================================================
-     */
 
     public int getMaxQuestionsForTopic(String topic) {
         if ("ALL".equalsIgnoreCase(topic)) {

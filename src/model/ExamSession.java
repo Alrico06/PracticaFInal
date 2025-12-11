@@ -3,13 +3,10 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Representa una sesión de examen configurada por el modelo.
- */
 public class ExamSession {
 
     private final List<Question> questions;
-    private final List<Integer> answers; // 0 = no respondida, 1-4 = índice
+    private final List<Integer> answers;
     private final long startMillis;
     private long endMillis;
 

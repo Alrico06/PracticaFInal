@@ -8,10 +8,6 @@ import java.util.Set;
 import model.Option;
 import model.Question;
 
-/**
- * Implementación de QuestionCreator usando Gemini (GenAI Fat-JAR).
- * El código de integración se inspira en el ejemplo incluido en PDF/ejemplo.java.
- */
 public class GeminiQuestionCreator implements QuestionCreator {
 
     private final String modelId;
@@ -31,13 +27,12 @@ public class GeminiQuestionCreator implements QuestionCreator {
         }
 
         try {
-            // Carga dinámica de la librería GenAI (sin dependencia de compilación)
+
             Class<?> cfgClass = Class.forName("es.usal.genai.GenAiConfig");
             Class<?> facadeClass = Class.forName("es.usal.genai.GenAiFacade");
             Class<?> schemasClass = Class.forName("es.usal.genai.SimpleSchemas");
             Class<?> schemaClass = Class.forName("com.google.genai.types.Schema");
 
-            // GenAiConfig.forGemini(modelId, apiKey)
             Object config = cfgClass
                     .getMethod("forGemini", String.class, String.class)
                     .invoke(null, modelId, apiKey);
@@ -47,7 +42,7 @@ public class GeminiQuestionCreator implements QuestionCreator {
             String prompt = buildPrompt(topic.trim());
 
             QuestionDTO dto;
-            // try-with-resources manual usando reflection para close()
+
             Object facade = facadeClass.getConstructor(cfgClass).newInstance(config);
             try {
                 dto = (QuestionDTO) facadeClass
@@ -74,7 +69,7 @@ public class GeminiQuestionCreator implements QuestionCreator {
 
             return new Question(description, dto.statement, topics, options);
         } catch (Exception e) {
-            // Fallback local para no dejar la opción vacía
+
             return fallbackQuestion(topic, e.getMessage());
         }
     }
@@ -82,7 +77,7 @@ public class GeminiQuestionCreator implements QuestionCreator {
     private String buildPrompt(String topic) {
         return "Return ONLY valid JSON with schema {\"author\":string,\"statement\":string,"
                 + "\"topics\":string[],\"options\":[{\"text\":string,\"rationale\":string,\"correct\":boolean}]}. "
-                + "Write everything in ENGLISH. "
+                + "Write everything in Spanish. "
                 + "Generate a multiple-choice question about \"" + topic + "\" with exactly 4 options and only one correct. "
                 + "Include at least one TOPIC in uppercase related to \"" + topic + "\". "
                 + "The rationale must explain why each option is correct or incorrect.";
@@ -120,9 +115,6 @@ public class GeminiQuestionCreator implements QuestionCreator {
         return new Question(description, statement, topics, options);
     }
 
-    /**
-     * DTOs públicos para structured output.
-     */
     public static class QuestionDTO {
         public String author;
         public String statement;
