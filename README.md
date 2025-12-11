@@ -46,6 +46,4 @@ Funciones principales
 - Generación automática con cualquier `QuestionCreator` disponible (Gemini incluido).
 - Modo examen con selección de tema, número de preguntas y cálculo de nota (si no hay preguntas se muestra un aviso).
 
-Licencia
---------
-MIT. Proyecto desarrollado por Álvaro Rico.
+Proyecto desarrollado por Álvaro Rico Refoyo.
