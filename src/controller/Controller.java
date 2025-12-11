@@ -155,6 +155,10 @@ public class Controller {
         return model.getBackupDescription();
     }
 
+    public int getQuestionCount() {
+        return model.getQuestionCount();
+    }
+
     public void persistState() {
         try {
             model.persistState();

@@ -527,6 +527,12 @@ public class InteractiveView extends BaseView {
         printHeader("EXAM MODE 🧠");
         renderStatusBar("Backup: " + controller.getBackupDescription(), "");
 
+        if (controller.getQuestionCount() == 0) {
+            showErrorMessage("No questions available. Create or import before starting an exam.");
+            Esdia.readString("Press ENTER to continue.");
+            return;
+        }
+
         String topic = chooseTopic(true);
         if (topic == null) return;
 
