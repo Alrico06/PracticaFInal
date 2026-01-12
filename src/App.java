@@ -8,6 +8,16 @@ import questionCreator.QuestionCreator;
 import repository.RepositoryException;
 import view.InteractiveView;
 
+/**
+ * @author Alvaro
+ * @version 1.0
+ * Clase principal para iniciar la aplicación de preguntas y respuestas.
+ */
+
+
+
+
+
 public class App {
     public static void main(String[] args) {
         try {
